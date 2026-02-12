@@ -102,6 +102,6 @@ export default defineConfig({
       'X-Frame-Options': 'ALLOW-FROM http://localhost:3000',
       'Content-Security-Policy': "frame-ancestors 'self' http://localhost:3000"
     },
-    port: 5193,
+    port: 3000,
   }
 });
