@@ -15,5 +15,5 @@ export const Environment = {
   /**
    * Url base de consultado dos dados dessa aplicação
    */
-  URL_BASE: import.meta.env.VITE_API_URL || 'http://localhost:5194',
+  URL_BASE: import.meta.env.VITE_API_URL || 'http://localhost:3333',
 };

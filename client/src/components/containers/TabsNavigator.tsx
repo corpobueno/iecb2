@@ -1,8 +1,5 @@
 import React, { useState } from 'react';
-import { Tabs, Tab, Box, useMediaQuery, useTheme, Theme, IconButton, Icon } from '@mui/material';
-import { useDrawerContext } from '../../contexts/DrawerContext';
-
-
+import { Tabs, Tab, Box, useTheme, } from '@mui/material';
 
 interface TabsNavigatorProps {
     steps: { label: string, content: React.ReactNode }[];
@@ -10,15 +7,12 @@ interface TabsNavigatorProps {
     defaultActiveStep?: number;
 }
 
-export const TabsNavigator: React.FC<TabsNavigatorProps> = ({ defaultActiveStep = 0, steps, mostrarBotaoMenu = true }) => {
-    const { toggleDrawerOpen } = useDrawerContext();
+export const TabsNavigator: React.FC<TabsNavigatorProps> = ({ defaultActiveStep = 0, steps }) => {
     const [activeStep, setActiveStep] = useState(defaultActiveStep);
 
     const handleChange = (_: React.SyntheticEvent, newValue: number) => {
         setActiveStep(newValue);
     };
-
-    const mdDown = useMediaQuery((theme: Theme) => theme.breakpoints.down('md'));
     // const mdDown = useMediaQuery((theme: Theme) => theme.breakpoints.down('md'));
     const theme = useTheme();
     return (
@@ -26,11 +20,7 @@ export const TabsNavigator: React.FC<TabsNavigatorProps> = ({ defaultActiveStep 
             {/* Botões no topo da página */}
             <Box display='flex' marginX={theme.spacing(1)} >
 
-                {(mdDown && mostrarBotaoMenu) &&  (
-                    <IconButton onClick={toggleDrawerOpen}>
-                        <Icon>menu</Icon>
-                    </IconButton>
-                )}
+               
                 <Tabs value={activeStep} onChange={handleChange} variant="fullWidth" >
                     {steps.map((step, index) => (
                         <Tab sx={{

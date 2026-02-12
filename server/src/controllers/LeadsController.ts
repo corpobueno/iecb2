@@ -22,6 +22,53 @@ export class LeadsController {
     }
   }
 
+  async findPrincipal(req: Request, res: Response) {
+    try {
+      const filtros = {
+        page: Number(req.query.page) || 1,
+        limit: Number(req.query.limit) || 20,
+        filter: String(req.query.filter || ''),
+        dataInicio: req.query.data_inicio ? String(req.query.data_inicio) : undefined,
+        dataFim: req.query.data_fim ? String(req.query.data_fim) : undefined,
+        selecao: req.query.selecao ? String(req.query.selecao) : undefined,
+        usuario: req.query.usuario ? String(req.query.usuario) : undefined,
+      };
+
+      const result = await this.useCases.findPrincipal(filtros);
+
+      res.setHeader('access-control-expose-headers', 'x-total-count');
+      res.setHeader('x-total-count', result.totalCount);
+      return res.status(StatusCodes.OK).json(result);
+    } catch (error) {
+      handleError(error, res);
+    }
+  }
+
+  async getPrincipalById(req: Request, res: Response) {
+    try {
+      const id = Number(req.params.id);
+      const result = await this.useCases.getById(id);
+
+      if (!result) {
+        return res.status(StatusCodes.NOT_FOUND).json({ message: 'Lead não encontrado' });
+      }
+
+      return res.status(StatusCodes.OK).json(result);
+    } catch (error) {
+      handleError(error, res);
+    }
+  }
+
+  async getComentarios(req: Request, res: Response) {
+    try {
+      const telefone = String(req.params.telefone);
+      const result = await this.useCases.getComentariosByTelefone(telefone);
+      return res.status(StatusCodes.OK).json(result);
+    } catch (error) {
+      handleError(error, res);
+    }
+  }
+
   async getById(req: Request, res: Response) {
     try {
       const id = Number(req.params.id);
@@ -34,8 +81,18 @@ export class LeadsController {
 
   async create(req: Request, res: Response) {
     try {
-      const data = { ...req.body, idUsuario: req.user?.username };
+      const data = { ...req.body, usuario: req.user?.username };
       const id = await this.useCases.create(data);
+      return res.status(StatusCodes.CREATED).json({ id });
+    } catch (error) {
+      handleError(error, res);
+    }
+  }
+
+  async createComentario(req: Request, res: Response) {
+    try {
+      const data = { ...req.body, usuario: req.user?.username };
+      const id = await this.useCases.createComentario(data);
       return res.status(StatusCodes.CREATED).json({ id });
     } catch (error) {
       handleError(error, res);

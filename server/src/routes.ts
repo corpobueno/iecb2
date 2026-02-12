@@ -114,6 +114,10 @@ export default (
   // LEADS ROUTES
   // =====================================================
   router.get('/leads', ensureAuthenticated, (req, res) => leadsController.find(req, res));
+  router.get('/leads/principal', ensureAuthenticated, (req, res) => leadsController.findPrincipal(req, res));
+  router.get('/leads/principal/:id', ensureAuthenticated, (req, res) => leadsController.getPrincipalById(req, res));
+  router.get('/leads/comentarios/:telefone', ensureAuthenticated, (req, res) => leadsController.getComentarios(req, res));
+  router.post('/leads/comentarios', ensureAuthenticated, (req, res) => leadsController.createComentario(req, res));
   router.get('/leads/:id', ensureAuthenticated, (req, res) => leadsController.getById(req, res));
   router.post('/leads', ensureAuthenticated, (req, res) => leadsController.create(req, res));
   router.put('/leads/:id', ensureAuthenticated, (req, res) => leadsController.update(req, res));

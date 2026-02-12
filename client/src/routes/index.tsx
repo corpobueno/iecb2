@@ -33,12 +33,11 @@ const PagamentoList = lazy(() => import('../pages/pagamento/PagamentoList'));
 const PagamentoRegister = lazy(() => import('../pages/pagamento/PagamentoRegister'));
 const PagamentoCaixa = lazy(() => import('../pages/pagamento/caixa/PagamentoCaixa'));
 
-// Leads
-const LeadsList = lazy(() => import('../pages/leads/LeadsList'));
-const LeadsRegister = lazy(() => import('../pages/leads/LeadsRegister'));
-
 // Diario
 const DiarioPage = lazy(() => import('../pages/diario/DiarioPage').then(m => ({ default: m.DiarioPage })));
+
+//Leads
+const Leads = lazy(() => import('../pages/leads/principal/LeadsPrincipal'));
 
 export const AppRoutes = () => {
   return (
@@ -81,13 +80,10 @@ export const AppRoutes = () => {
         <Route path="/pagamentos/cadastrar" element={<PagamentoRegister />} />
         <Route path="/pagamentos/editar/:id" element={<PagamentoRegister />} />
 
-        {/* Leads */}
-        <Route path="/leads" element={<LeadsList />} />
-        <Route path="/leads/cadastrar" element={<LeadsRegister />} />
-        <Route path="/leads/editar/:id" element={<LeadsRegister />} />
-
         {/* Diario */}
         <Route path="/diario" element={<DiarioPage />} />
+
+        <Route path="/leads" element={<Leads />} />
 
         {/* 404 */}
         <Route path="*" element={<NotFound />} />

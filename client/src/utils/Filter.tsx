@@ -10,7 +10,7 @@ import {
 } from "@mui/material";
 import { useAppThemeContext } from "../contexts";
 
-interface IFilterInputs {
+export interface IFilterInputs {
   content: React.ReactElement[];
   isChecked: boolean[];
 }
