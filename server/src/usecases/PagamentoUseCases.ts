@@ -1,0 +1,181 @@
+import { IPagamento, IPagamentoForm, IPagamentoProcessar, ICaixaPagamentoFiltros, ICaixaPagamentoResult, ICaixaFiltrosOptions, ICaixaDetalhesFiltros, IPagamentoDetalhe } from '../entities/IPagamento';
+import PagamentoRepository from '../repositories/PagamentoRepository';
+import { AppError } from '../utils/AppError';
+import db from '../db';
+
+export class PagamentoUseCases {
+  constructor(private repository: PagamentoRepository) {}
+
+  async findByCliente(idCliente: number, ativo: number = 1): Promise<IPagamento[]> {
+    return this.repository.findByCliente(idCliente, ativo);
+  }
+
+  async findByAula(idAula: number, ativo: number = 1): Promise<IPagamento[]> {
+    return this.repository.findByAula(idAula, ativo);
+  }
+
+  async getById(id: number): Promise<IPagamento> {
+    const result = await this.repository.getById(id);
+    if (!result) {
+      throw new AppError('Pagamento não encontrado', 404);
+    }
+    return result;
+  }
+
+  async create(data: IPagamentoForm): Promise<number> {
+    if (!data.idCliente) {
+      throw new AppError('Cliente é obrigatório', 400);
+    }
+    if (!data.valor) {
+      throw new AppError('Valor é obrigatório', 400);
+    }
+    return this.repository.create(data);
+  }
+
+  async update(id: number, data: Partial<IPagamentoForm>): Promise<void> {
+    const existing = await this.repository.getById(id);
+    if (!existing) {
+      throw new AppError('Pagamento não encontrado', 404);
+    }
+    return this.repository.update(id, data);
+  }
+
+  async delete(id: number): Promise<void> {
+    const existing = await this.repository.getById(id);
+    if (!existing) {
+      throw new AppError('Pagamento não encontrado', 404);
+    }
+
+    // Se for "Crédito Cliente" (idPagamento = 16), converter de volta em crédito
+    if (existing.idPagamento === 16) {
+      return this.repository.convertToCredit(id);
+    }
+
+    return this.repository.delete(id);
+  }
+
+  async getCreditosByCliente(idCliente: number): Promise<{ creditos: number }> {
+    return this.repository.getCreditosByCliente(idCliente);
+  }
+
+  /**
+   * Processa pagamento de um aluno matriculado
+   * Cria registros de pagamento e atualiza créditos se necessário
+   */
+  async processarPagamentoAluno(dados: IPagamentoProcessar): Promise<number[]> {
+    const { idCliente, idAula, idAluno, docente, caixa, pagamentos, valorPendente } = dados;
+
+    const trx = await db.transaction();
+    const ids: number[] = [];
+
+    try {
+      for (const pag of pagamentos) {
+        // Se for pagamento com crédito do cliente (idPagamento = 16)
+        if (pag.idPagamento === 16) {
+          // Buscar créditos disponíveis do cliente
+          const creditosDisp = await trx('pagamento_iecb')
+            .where({ id_cliente: idCliente, ativo: 1 })
+            .whereNull('id_aula')
+            .where('valor', '>', 0)
+            .orderBy('data', 'asc');
+
+          let valorConsumido = 0;
+          let valorRestante = pag.valor;
+
+          // Consumir créditos existentes
+          for (const credito of creditosDisp) {
+            if (valorRestante <= 0) break;
+
+            const valorCredito = Number(credito.valor);
+
+            if (valorCredito <= valorRestante) {
+              // Consumir todo o crédito (zerar)
+              await trx('pagamento_iecb')
+                .where({ id: credito.id })
+                .update({ valor: 0 });
+              valorConsumido += valorCredito;
+              valorRestante -= valorCredito;
+            } else {
+              // Consumir parcialmente o crédito
+              await trx('pagamento_iecb')
+                .where({ id: credito.id })
+                .update({ valor: valorCredito - valorRestante });
+              valorConsumido += valorRestante;
+              valorRestante = 0;
+            }
+          }
+
+          if (valorConsumido < pag.valor) {
+            throw new AppError(`Crédito insuficiente. Disponível: R$ ${valorConsumido.toFixed(2)}`, 400);
+          }
+
+          // Registrar o uso do crédito como pagamento
+          const [id] = await trx('pagamento_iecb').insert({
+            idCliente,
+            idAula,
+            idAluno,
+            docente,
+            caixa,
+            valor: pag.valor,
+            qnt: pag.qnt,
+            idPagamento: pag.idPagamento,
+          });
+          ids.push(id);
+        } else {
+          // Pagamento normal
+          const [id] = await trx('pagamento_iecb').insert({
+            idCliente,
+            idAula,
+            idAluno,
+            docente,
+            caixa,
+            valor: pag.valor,
+            qnt: pag.qnt,
+            idPagamento: pag.idPagamento,
+          });
+          ids.push(id);
+        }
+      }
+
+      // Se há valor pendente, cria crédito para o cliente
+      if (valorPendente > 0) {
+        await trx('pagamento_iecb').insert({
+          idCliente,
+          caixa,
+          valor: valorPendente,
+          idPagamento: 0, // Crédito
+        });
+      }
+
+      await trx.commit();
+      return ids;
+    } catch (error) {
+      await trx.rollback();
+      throw error;
+    }
+  }
+
+  async getCaixaPagamentos(filtros: ICaixaPagamentoFiltros): Promise<ICaixaPagamentoResult> {
+    if (!filtros.data_inicio || !filtros.data_fim) {
+      throw new AppError('Data inicial e final são obrigatórias', 400);
+    }
+    return this.repository.getCaixaPagamentos(filtros);
+  }
+
+  async getCaixaFiltrosOptions(filtros: ICaixaPagamentoFiltros): Promise<ICaixaFiltrosOptions> {
+    if (!filtros.data_inicio || !filtros.data_fim) {
+      throw new AppError('Data inicial e final são obrigatórias', 400);
+    }
+    return this.repository.getCaixaFiltrosOptions(filtros);
+  }
+
+  async getCaixaDetalhes(filtros: ICaixaDetalhesFiltros): Promise<IPagamentoDetalhe[]> {
+    if (!filtros.data_inicio || !filtros.data_fim) {
+      throw new AppError('Data inicial e final são obrigatórias', 400);
+    }
+    if (filtros.idPagamento === undefined) {
+      throw new AppError('Forma de pagamento é obrigatória', 400);
+    }
+    return this.repository.getCaixaDetalhes(filtros);
+  }
+}

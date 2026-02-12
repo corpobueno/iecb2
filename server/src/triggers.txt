@@ -1,0 +1,84 @@
+* atualiza o saldo da tabela auxiliar 'trigger_produtos_saldo' 
+com base nos lançamentos de entrada e saída de produtos:
+
+
+------------INSERT PRODUTO 
+
+DELIMITER $$
+
+CREATE TRIGGER create_trigger_produtos_saldo
+AFTER INSERT ON produtos_servicos
+FOR EACH ROW
+BEGIN
+  IF NEW.tipo = 'produto' THEN
+    INSERT INTO trigger_produtos_saldo (id, nome, valor, empresa)
+    VALUES (NEW.id, NEW.nome, NEW.valor, NEW.empresa);
+  END IF;
+END $$
+
+DELIMITER ;
+
+
+-------------UPDATE PRODUTO
+
+
+DELIMITER $$
+
+CREATE TRIGGER update_trigger_produtos_saldo
+AFTER UPDATE ON produtos_servicos
+FOR EACH ROW
+BEGIN
+  IF NEW.tipo = 'produto' THEN
+    UPDATE trigger_produtos_saldo set nome = NEW.nome, valor = NEW.valor, active = NEW.active, categoria = NEW.categoria
+    WHERE id = NEW.id;
+  END IF;
+END $$
+
+DELIMITER ;
+
+
+-------------INSERT LANCAMENTO:
+
+DELIMITER $$
+
+CREATE TRIGGER trigger_produtos_saldo_insert
+AFTER INSERT ON lancamentos
+FOR EACH ROW
+BEGIN
+  IF NEW.tipo = 'despesa' THEN
+    UPDATE trigger_produtos_saldo
+    SET saldo = saldo + NEW.qnt, custo = NEW.valor
+    WHERE id = NEW.id_produto;
+  ELSEIF NEW.tipo = 'receita' THEN
+    UPDATE trigger_produtos_saldo
+    SET total_saida = total_saida + NEW.qnt, saldo = saldo - NEW.qnt
+    WHERE id = NEW.id_produto;
+  END IF;
+END$$
+
+DELIMITER ;
+
+
+--------------DELETE LANCAMENTO:
+
+DELIMITER $$
+
+CREATE TRIGGER trigger_produtos_saldo_delete
+AFTER DELETE ON lancamentos
+FOR EACH ROW
+BEGIN
+  IF OLD.tipo = 'despesa' THEN
+    -- Subtrair a quantidade do saldo para entradas
+    UPDATE trigger_produtos_saldo
+    SET saldo = saldo - OLD.qnt
+    WHERE id = OLD.id_produto;
+  ELSEIF OLD.tipo = 'receita' THEN
+    -- Adicionar a quantidade de volta ao saldo para saídas
+    UPDATE trigger_produtos_saldo
+    SET saldo = saldo + OLD.qnt, total_saida = total_saida - OLD.qnt
+    WHERE id = OLD.id_produto;
+  END IF;
+END$$
+
+DELIMITER ;
+

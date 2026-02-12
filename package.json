@@ -1,0 +1,18 @@
+{
+  "name": "iecb",
+  "version": "1.0.0",
+  "description": "IECB - Sistema de Gestão",
+  "scripts": {
+    "build": "npm run build:client && npm run build:server",
+    "build:client": "cd client && npm run build",
+    "build:server": "cd server && rm -rf dist && npx tsc",
+    "build:server:clean": "cd server && rm -rf dist && npx tsc",
+    "deploy": "npm run build && cd server && pm2 restart iecbs",
+    "deploy:client": "cd client && npm run build",
+    "deploy:server": "cd server && rm -rf dist && npx tsc && pm2 restart iecbs",
+    "deploy:full": "npm run deploy:client && npm run deploy:server",
+    "push": "git add . && git commit -m 'Atualização' && git push"
+  },
+  "author": "",
+  "license": "ISC"
+}
