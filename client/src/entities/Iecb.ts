@@ -243,7 +243,7 @@ export interface ILeadsFiltros {
 // COMENTÁRIOS DE LEADS (tabela separada)
 // ========================================
 export interface ILeadsComentarioForm {
-  idLead: number;
+  idLeads: number;
   telefone: string;
   texto: string;
   status: string;

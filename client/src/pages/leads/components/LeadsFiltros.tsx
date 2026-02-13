@@ -24,6 +24,8 @@ export const LeadsFiltros: React.FC<ILeadsFiltrosProps> = ({
   const [mostrarTodos, setMostrarTodos] = useState(!initialFilters.usuario);
   const [exportDialogOpen, setExportDialogOpen] = useState(false);
   const statusList = getStatusList('leads_iecb');
+ 
+  console.log()
 
   const updateFilters = useCallback((newFilters: Partial<ILeadsFiltros & { filter?: string }>) => {
     const updatedFilters = { ...filters, ...newFilters };

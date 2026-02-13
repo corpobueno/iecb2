@@ -4,7 +4,7 @@ import CardActions from '@mui/material/CardActions';
 import CardContent from '@mui/material/CardContent';
 import Button from '@mui/material/Button';
 import { ILeadsPrincipal } from '../../../entities/Iecb';
-import { Chip, Typography } from '@mui/material';
+import { Typography } from '@mui/material';
 import { formatDateTime, toTel } from '../../../utils/functions';
 import { CopyToClipboard } from '../../../utils/CopyToClipboard';
 import * as LucideIcons from 'lucide-react';
@@ -14,9 +14,10 @@ interface ILeadsPrincipalCardProps {
     handleOpenDetalhe?: (lead: ILeadsPrincipal) => void;
     handleOpenComentarios: (lead: ILeadsPrincipal) => void;
     showSelecao?: boolean;
+    statusColor: string;
 }
 
-export const LeadsPrincipalCard: React.FC<ILeadsPrincipalCardProps> = ({ showSelecao, row, handleOpenComentarios }) => {
+export const LeadsPrincipalCard: React.FC<ILeadsPrincipalCardProps> = ({ statusColor, showSelecao = true, row, handleOpenComentarios }) => {
 
     return (
         <Box sx={{ minWidth: 300, maxWidth: 500 }}>
@@ -26,17 +27,15 @@ export const LeadsPrincipalCard: React.FC<ILeadsPrincipalCardProps> = ({ showSel
                         <CardTextLucideIcon
                             iconName={'user'}
                             iconColor={'#0066ff'}
+                            fontWeight={500}
                         >
                             {row.nome || 'Sem nome'}
                         </CardTextLucideIcon>
                         {showSelecao && row.selecao && (
-                            <Chip
-                                size='small'
-                                sx={{ fontWeight: 500 }}
-                                label={row.selecao}
-                                color="primary"
-                                variant="outlined"
-                            />
+                            <LucideIcons.Square
+                                size={10}
+                                fill={statusColor}
+                                />
                         )}
                     </Box>
 
@@ -44,14 +43,16 @@ export const LeadsPrincipalCard: React.FC<ILeadsPrincipalCardProps> = ({ showSel
                         toCopy={row.telefone}
                         iconName={'phone'}
                         iconColor={'mediumseagreen'}
+                        
                     >
                         {toTel(String(row.telefone))}
                     </CardTextLucideIcon>
 
                     {row.interesse && (
                         <CardTextLucideIcon
-                            iconName={'star'}
+                            iconName={'graduationCap'}
                             iconColor={'#f5a623'}
+                            fontWeight={500}
                         >
                             {row.interesse}
                         </CardTextLucideIcon>
@@ -107,7 +108,7 @@ interface MenuIconProps {
 
 const MenuIcon: React.FC<MenuIconProps> = ({
     icon,
-    size = 24,
+    size = 22,
     color = 'currentColor',
     className
 }) => {
@@ -150,13 +151,13 @@ interface CardTextIconProps {
 const CardTextLucideIcon: React.FC<CardTextIconProps> = ({ children, iconName, iconColor, textColor = '#444', fontWeight, toCopy }) => {
 
     return (
-        <Box display={'flex'} alignItems={'center'} gap={1}>
+        <Box display={'flex'} alignItems={'center'} gap={0.5}>
 
-            <MenuIcon icon={iconName ?? 'Asterisk'} color={iconColor || '#2e6aec'} size={14} />
+            <MenuIcon icon={iconName ?? 'Asterisk'} color={iconColor || '#2e6aec'} size={13} />
 
             <Typography
                 color={textColor}
-                fontSize={'0.85rem'}
+                fontSize={'0.75rem'}
                 whiteSpace="nowrap"
                 overflow="hidden"
                 textOverflow="ellipsis"

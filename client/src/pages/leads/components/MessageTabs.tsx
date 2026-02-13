@@ -3,6 +3,7 @@ import { ILeadsPrincipal } from "../../../entities/Iecb";
 import { ComentariosLeads } from "./ComentariosLeads";
 import { DetalheLead } from "../principal/DetalheLead";
 import { TabsNavigator } from "../../../components/containers/TabsNavigator";
+import { Paper } from "@mui/material";
 
 interface IMessageTabsProps {
   leads: string;
@@ -25,21 +26,25 @@ export const MessageTabs: React.FC<IMessageTabsProps> = ({
           reloadList={reloadList}
         />
     },
-   
+
   ];
 
-    const stepPrincipal = [
+  const stepPrincipal = [
     {
       label: 'Detalhe',
       content:
         <DetalheLead
-         id={lead?.id ?? 0}
+          id={lead?.id ?? 0}
         />
     },
   ];
 
   return (
-    <TabsNavigator defaultActiveStep={0} steps={[...steps, ...stepPrincipal]} />
+    <Paper sx={{ minHeight: 'calc(100dvh - 20px - env(safe-area-inset-bottom))', width: '500px' }}
+    >
+      <TabsNavigator defaultActiveStep={0} steps={[...steps, ...stepPrincipal]} />
+    </Paper>
+
   );
 
 }

@@ -20,7 +20,7 @@ export const ComentariosLeads: React.FC<IComentariosProps> = ({
     reloadList,
 }) => {
     const initialProject: Partial<ILeadsComentarioForm> = {
-        idLead: lead?.id ?? 0,
+        idLeads: lead?.id ?? 0,
         telefone: lead?.telefone || '',
         texto: '',
         status: '',
@@ -55,7 +55,7 @@ export const ComentariosLeads: React.FC<IComentariosProps> = ({
 
         LeadsService.createComentario({
             ...project,
-            idLead: lead.id,
+            idLeads: lead.id,
             telefone: lead.telefone,
         })
             .then(result => {

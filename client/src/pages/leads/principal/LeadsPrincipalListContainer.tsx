@@ -12,6 +12,7 @@ interface IAgendaCardProps {
     handleOpenDetalhe: (row: ILeadsPrincipal) => void;
     searchParams: any;
     title?: string;
+    statusColor: string;
 }
 
 
@@ -20,6 +21,7 @@ export const LeadsPrincipalListContainer: React.FC<IAgendaCardProps> = ({
     handleOpenDetalhe,
     searchParams,
     title,
+    statusColor
 }) => {
     const { debounce } = useDebounce();
     const containerRef = useRef<HTMLDivElement | null>(null);
@@ -99,7 +101,7 @@ export const LeadsPrincipalListContainer: React.FC<IAgendaCardProps> = ({
                         handleOpenDetalhe={handleOpenDetalhe}
                         key={index}
                         row={row}
-                        showSelecao={!title}
+                        statusColor={statusColor}
                     />
                 ))
             )}

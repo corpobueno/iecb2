@@ -37,7 +37,7 @@ export const LayoutListContainer = ({
     totalCount
 }: any) => {
     // Define o offset baseado na presença do título
-    const offset = title ? '140px' : '180px';
+    const offset = title ? '105px' : '135px';
 
     return (
         <Container
@@ -64,9 +64,10 @@ export const LayoutListContainer = ({
                     display: 'flex',
                     justifyContent: 'space-between',
                     alignItems: 'center',
+                    pb: 1
                 }}>
                     <Typography variant="h6">{title}</Typography>
-                    <Typography variant="h6" color='textSecondary' >{totalCount}</Typography>
+                    <Typography variant="h6" color='textSecondary'>{totalCount}</Typography>
                 </Box>
             )}
 

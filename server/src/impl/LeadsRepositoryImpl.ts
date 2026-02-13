@@ -38,7 +38,7 @@ const mapToDb = (data: Partial<ILeadsForm>): Record<string, any> => {
 // Mapeamento para comentários
 const mapToComentario = (row: any): ILeads => ({
   id: row.id,
-  idLead: row.id_lead,
+  idLeads: row.id_lead,
   telefone: row.telefone,
   texto: row.texto,
   status: row.status,
@@ -49,7 +49,7 @@ const mapToComentario = (row: any): ILeads => ({
 
 export class LeadsRepositoryImpl implements LeadsRepository {
   private readonly tableName = 'leads_iecb';
-  private readonly comentariosTable = 'leads_iecb_comentarios';
+  private readonly comentariosTable = 'comentario_leads';
 
   async findPrincipal(filtros: ILeadsFiltros): Promise<{ data: ILeadsPrincipal[]; totalCount: number }> {
     const { page, limit = 20, filter, dataInicio, dataFim, selecao, usuario } = filtros;
@@ -78,7 +78,7 @@ export class LeadsRepositoryImpl implements LeadsRepository {
       query = query.where('selecao', selecao);
     }
 
-    if (usuario) {
+    if (usuario && selecao !== 'nao') {
       query = query.where('id_usuario', usuario);
     }
 
@@ -146,7 +146,7 @@ export class LeadsRepositoryImpl implements LeadsRepository {
   async createComentario(data: ILeadsComentarioForm): Promise<number> {
     try {
       const dbData = {
-        id_lead: data.idLead,
+        id_leads: data.idLeads,
         telefone: data.telefone,
         texto: data.texto,
         status: data.status,
