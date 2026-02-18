@@ -28,7 +28,7 @@ const AcompanhamentoRegister: React.FC = () => {
   const navigate = useNavigate();
   const { showSnackbarMessage } = useSnackbar();
   const { save, ...methods } = useVForm<IAcompanhamentoForm>({
-    resolver: yupResolver(formValidationSchema),
+    resolver: yupResolver(formValidationSchema) as any,
   });
   const [isLoading, setIsLoading] = useState(false);
 
