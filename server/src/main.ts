@@ -118,7 +118,7 @@ app.use('/', routes(
 ));
 
 // Inicialização do servidor
-const PORT = process.env.PORT || '5184';
-server.listen(PORT, () => {
-  console.log(`Servidor rodando em: ${process.env.DB_HOST} porta:${PORT}`);
+
+server.listen(process.env.PORT, () => {
+  console.log(`Servidor rodando em: ${process.env.DB_HOST} porta:${process.env.PORT}`);
 });

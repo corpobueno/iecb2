@@ -75,25 +75,51 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
         return;
       }
 
-      // Valida o token com o backend do Corpo Bueno
-      const result = await CorpoBuenoAuthService.validateFrameToken(token);
+      try {
+        // Autentica com o backend IECB usando o token
+        const response = await fetch(`${Environment.URL_BASE}/auth/frame-token`, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          credentials: 'include',
+          body: JSON.stringify({ token }),
+        });
 
-      if (result instanceof Error) {
-        setError(result.message);
+        if (!response.ok) {
+          const errorData = await response.json().catch(() => ({}));
+          setError(errorData.errors?.default || 'Token inválido ou expirado');
+          setIsLoading(false);
+          return;
+        }
+
+        const userData = await response.json();
+
+        // Cria objeto de usuário compatível com ICorpoBuenoUser
+        const authenticatedUser: ICorpoBuenoUser = {
+          login: userData.username,
+          nome: userData.name || userData.username,
+          email: userData.email || '',
+          empresa: userData.companyId,
+          unidade: 1,
+          grupo: userData.groupId,
+        };
+
+        // Token válido - armazena dados do usuário
+        setUser(authenticatedUser);
+
+        // Remove o token da URL por segurança
+        CorpoBuenoAuthService.clearTokenFromUrl();
+
+        // Armazena na sessionStorage para persistir durante a sessão do iframe
+        sessionStorage.setItem('iecb_user', JSON.stringify(authenticatedUser));
+
+        setError(null);
         setIsLoading(false);
-        return;
+      } catch (err) {
+        setError('Erro ao autenticar com o sistema');
+        setIsLoading(false);
       }
-
-      // Token válido - armazena dados do usuário
-      setUser(result);
-
-      // Remove o token da URL por segurança
-      CorpoBuenoAuthService.clearTokenFromUrl();
-
-      // Armazena na sessionStorage para persistir durante a sessão do iframe
-      sessionStorage.setItem('iecb_user', JSON.stringify(result));
-
-      setIsLoading(false);
     };
 
     // Verifica se já tem usuário na sessionStorage (para navegação interna)
