@@ -99,8 +99,9 @@ export default defineConfig({
   },
   server: {
     headers: {
-      'X-Frame-Options': 'ALLOW-FROM http://localhost:3000',
-      'Content-Security-Policy': "frame-ancestors 'self' http://localhost:3000"
+      // Temporário: permite qualquer origem (não usar em produção!)
+      // 'X-Frame-Options': 'ALLOW-FROM http://localhost:3000',
+      'Content-Security-Policy': "frame-ancestors *"
     },
     port: 3000,
   }

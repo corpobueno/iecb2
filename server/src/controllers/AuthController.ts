@@ -109,7 +109,6 @@ export class AuthController {
         username: req.user.username,
         accessToken,
         groupId: req.user.groupId,
-        companyId: req.user.companyId,
       });
     } catch (error) {
       handleError(error, res);

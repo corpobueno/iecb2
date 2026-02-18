@@ -33,8 +33,6 @@ export const ensureAuthenticated: RequestHandler = async (req, res, next) => {
     // Armazena as informações do usuário no objeto req.user
     req.user = {
       username: jwtData.username,
-      companyId: jwtData.companyId,
-      lite: jwtData.lite,
       groupId: (jwtData as any).groupId,
     };
 

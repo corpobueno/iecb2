@@ -4,8 +4,6 @@ declare global {
     interface Request {
       user?: {
         username: string;
-        companyId: number;
-        lite: number;
         groupId: number;
       };
     }
