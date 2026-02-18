@@ -20,7 +20,7 @@ export const setupExpressServer = (): { app: Application; server: Server } => {
       'http://localhost:5193', // iecb client
       'http://localhost:3000',
       'https://web.sysnode.com.br',
-      'https://iecb.sysnode.com.br',
+      'https://app.institutocorpobueno.com.br',
     ],
     credentials: true,
   }));
