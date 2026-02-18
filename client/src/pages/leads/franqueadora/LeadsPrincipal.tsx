@@ -16,8 +16,8 @@ const LeadsFranqueadoraPrincipal: React.FC = () => {
     const initialFilters = {
         page: 1,
         filter: '',
-        data_inicio: dayjs().startOf('month').format('YYYY-MM-DD'),
-        data_fim: dayjs().endOf('month').format('YYYY-MM-DD'),
+        data_inicio: '',
+        data_fim: '',
         status: '',
         user: '',
     }

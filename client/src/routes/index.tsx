@@ -86,7 +86,7 @@ export const AppRoutes = () => {
 
         <Route path="/leads/principal" element={<Leads />} />
 
-                <Route path="/leads/franqueadora" element={<LeadsFranqueadoraPrincipal />} />
+        <Route path="/leads/franqueadora" element={<LeadsFranqueadoraPrincipal />} />
 
 
         {/* 404 */}
