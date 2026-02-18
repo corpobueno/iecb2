@@ -10,6 +10,7 @@ import { AgendaController } from './controllers/AgendaController';
 import { AlunoController } from './controllers/AlunoController';
 import { PagamentoController } from './controllers/PagamentoController';
 import { LeadsController } from './controllers/LeadsController';
+import { LeadsFranqueadoraController } from './controllers/LeadsFranqueadoraController';
 import { DiarioController } from './controllers/DiarioController';
 
 export default (
@@ -22,6 +23,7 @@ export default (
   alunoController: AlunoController,
   pagamentoController: PagamentoController,
   leadsController: LeadsController,
+  leadsFranqueadoraController: LeadsFranqueadoraController,
   diarioController: DiarioController
 ) => {
   const router = express.Router();
@@ -122,6 +124,19 @@ export default (
   router.post('/leads', ensureAuthenticated, (req, res) => leadsController.create(req, res));
   router.put('/leads/:id', ensureAuthenticated, (req, res) => leadsController.update(req, res));
   router.delete('/leads/:id', ensureAuthenticated, (req, res) => leadsController.delete(req, res));
+
+  // =====================================================
+  // LEADS FRANQUEADORA ROUTES
+  // =====================================================
+  router.get('/leads-franqueadora', ensureAuthenticated, (req, res) => leadsFranqueadoraController.find(req, res));
+  router.get('/leads-franqueadora/principal', ensureAuthenticated, (req, res) => leadsFranqueadoraController.findPrincipal(req, res));
+  router.get('/leads-franqueadora/principal/:id', ensureAuthenticated, (req, res) => leadsFranqueadoraController.getPrincipalById(req, res));
+  router.get('/leads-franqueadora/comentarios/:telefone', ensureAuthenticated, (req, res) => leadsFranqueadoraController.getComentarios(req, res));
+  router.post('/leads-franqueadora/comentarios', ensureAuthenticated, (req, res) => leadsFranqueadoraController.createComentario(req, res));
+  router.get('/leads-franqueadora/:id', ensureAuthenticated, (req, res) => leadsFranqueadoraController.getById(req, res));
+  router.post('/leads-franqueadora', ensureAuthenticated, (req, res) => leadsFranqueadoraController.create(req, res));
+  router.put('/leads-franqueadora/:id', ensureAuthenticated, (req, res) => leadsFranqueadoraController.update(req, res));
+  router.delete('/leads-franqueadora/:id', ensureAuthenticated, (req, res) => leadsFranqueadoraController.delete(req, res));
 
   // =====================================================
   // DIARIO ROUTES

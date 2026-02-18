@@ -34,6 +34,7 @@ import { AgendaRepositoryImpl } from './impl/AgendaRepositoryImpl';
 import { AlunoRepositoryImpl } from './impl/AlunoRepositoryImpl';
 import { PagamentoRepositoryImpl } from './impl/PagamentoRepositoryImpl';
 import { LeadsRepositoryImpl } from './impl/LeadsRepositoryImpl';
+import { LeadsFranqueadoraRepositoryImpl } from './impl/LeadsFranqueadoraRepositoryImpl';
 import { DiarioRepositoryImpl } from './impl/DiarioRepositoryImpl';
 
 const acompanhamentoRepository = new AcompanhamentoRepositoryImpl();
@@ -44,6 +45,7 @@ const agendaRepository = new AgendaRepositoryImpl();
 const alunoRepository = new AlunoRepositoryImpl();
 const pagamentoRepository = new PagamentoRepositoryImpl();
 const leadsRepository = new LeadsRepositoryImpl();
+const leadsFranqueadoraRepository = new LeadsFranqueadoraRepositoryImpl();
 const diarioRepository = new DiarioRepositoryImpl();
 
 // ========================================
@@ -58,6 +60,7 @@ import { AgendaUseCases } from './usecases/AgendaUseCases';
 import { AlunoUseCases } from './usecases/AlunoUseCases';
 import { PagamentoUseCases } from './usecases/PagamentoUseCases';
 import { LeadsUseCases } from './usecases/LeadsUseCases';
+import { LeadsFranqueadoraUseCases } from './usecases/LeadsFranqueadoraUseCases';
 import { DiarioUseCases } from './usecases/DiarioUseCases';
 
 const authUseCases = new AuthUseCases();
@@ -69,6 +72,7 @@ const agendaUseCases = new AgendaUseCases(agendaRepository);
 const alunoUseCases = new AlunoUseCases(alunoRepository);
 const pagamentoUseCases = new PagamentoUseCases(pagamentoRepository);
 const leadsUseCases = new LeadsUseCases(leadsRepository);
+const leadsFranqueadoraUseCases = new LeadsFranqueadoraUseCases(leadsFranqueadoraRepository);
 const diarioUseCases = new DiarioUseCases(diarioRepository);
 
 // ========================================
@@ -83,6 +87,7 @@ import { AgendaController } from './controllers/AgendaController';
 import { AlunoController } from './controllers/AlunoController';
 import { PagamentoController } from './controllers/PagamentoController';
 import { LeadsController } from './controllers/LeadsController';
+import { LeadsFranqueadoraController } from './controllers/LeadsFranqueadoraController';
 import { DiarioController } from './controllers/DiarioController';
 
 const authController = new AuthController(authUseCases);
@@ -94,6 +99,7 @@ const agendaController = new AgendaController(agendaUseCases);
 const alunoController = new AlunoController(alunoUseCases);
 const pagamentoController = new PagamentoController(pagamentoUseCases);
 const leadsController = new LeadsController(leadsUseCases);
+const leadsFranqueadoraController = new LeadsFranqueadoraController(leadsFranqueadoraUseCases);
 const diarioController = new DiarioController(diarioUseCases);
 
 // Rotas
@@ -107,6 +113,7 @@ app.use('/', routes(
   alunoController,
   pagamentoController,
   leadsController,
+  leadsFranqueadoraController,
   diarioController
 ));
 

@@ -145,15 +145,8 @@ export class LeadsRepositoryImpl implements LeadsRepository {
 
   async createComentario(data: ILeadsComentarioForm): Promise<number> {
     try {
-      const dbData = {
-        id_leads: data.idLeads,
-        telefone: data.telefone,
-        texto: data.texto,
-        status: data.status,
-        usuario: data.usuario,
-        data: db.fn.now(),
-      };
-      const [id] = await db(this.comentariosTable).insert(dbData);
+     
+      const [id] = await db(this.comentariosTable).insert(data);
       return id;
     } catch (error) {
       console.error('Erro ao criar comentário:', error);

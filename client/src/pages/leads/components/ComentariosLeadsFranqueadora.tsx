@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
-import { LeadsService } from '../../../api/services/LeadsService';
-import { ILeads, ILeadsComentarioForm, ILeadsPrincipal } from '../../../entities/Iecb';
+import { LeadsFranqueadoraService } from '../../../api/services/LeadsFranqueadoraService';
+import { ILeadsFranqueadora, ILeadsFranqueadoraComentario, ILeadsFranqueadoraComentarioForm } from '../../../entities/Iecb';
 import { format } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 import { ComentariosContainer } from '../layouts/ComentariosContainer';
@@ -10,26 +10,26 @@ import { getStatusList } from '../status';
 
 interface IComentariosProps {
     leads: string;
-    lead: ILeadsPrincipal | null;
+    lead: ILeadsFranqueadora | null;
     reloadList: () => void;
 }
 
-export const ComentariosLeads: React.FC<IComentariosProps> = ({
+export const ComentariosLeadsFranqueadora: React.FC<IComentariosProps> = ({
     leads,
     lead,
     reloadList,
 }) => {
-    const initialProject: Partial<ILeadsComentarioForm> = {
+    const initialProject: Partial<ILeadsFranqueadoraComentarioForm> = {
         idLeads: lead?.id ?? 0,
         telefone: lead?.telefone || '',
-        leads,
-        texto: '',
+        tabela: leads,
+        nota: '',
         status: '',
     }
     const selectOptions = getStatusList(leads);
     const [isLoading, setIsLoading] = useState(true);
-    const [comentarios, setComentarios] = useState<ILeads[]>([]);
-    const [project, setProject] = useState<Partial<ILeadsComentarioForm>>(initialProject);
+    const [comentarios, setComentarios] = useState<ILeadsFranqueadoraComentario[]>([]);
+    const [project, setProject] = useState<Partial<ILeadsFranqueadoraComentarioForm>>(initialProject);
 
     useEffect(() => {
         loadData();
@@ -38,7 +38,7 @@ export const ComentariosLeads: React.FC<IComentariosProps> = ({
     const loadData = () => {
         if (!lead) return;
         setIsLoading(true);
-        LeadsService.getComentarios(lead.telefone)
+        LeadsFranqueadoraService.getComentarios(lead.telefone)
             .then(result => {
                 if (result instanceof Error) {
                     alert(result.message);
@@ -54,10 +54,11 @@ export const ComentariosLeads: React.FC<IComentariosProps> = ({
     const save = () => {
         if (!lead) return;
 
-        LeadsService.createComentario({
+        LeadsFranqueadoraService.createComentario({
             ...project,
             idLeads: lead.id,
             telefone: lead.telefone,
+            tabela: leads,
         })
             .then(result => {
                 if (result instanceof Error) {
@@ -71,16 +72,17 @@ export const ComentariosLeads: React.FC<IComentariosProps> = ({
     }
 
     const handleSend = () => {
-        if (project.texto?.trim() && project.status) {
+        if (project.nota?.trim() && project.status) {
             save();
         }
     };
 
     const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
         const { name, value } = e.target;
-        setProject({ ...project, [name]: value })
+        // Map 'texto' to 'nota' for compatibility with ComentariosInput
+        const fieldName = name === 'texto' ? 'nota' : name;
+        setProject({ ...project, [fieldName]: value })
     };
-
 
     return (
         <>
@@ -92,17 +94,17 @@ export const ComentariosLeads: React.FC<IComentariosProps> = ({
                 {comentarios.map((comentario) => (
                     <ComentarioItem
                         key={comentario.id}
-                        content={comentario.texto}
-                        sender={comentario.usuario || ''}
+                        content={comentario.nota}
+                        sender={comentario.user || ''}
                         timestamp={format(new Date(comentario.data), "HH:mm - dd/MM/yyyy", { locale: ptBR })}
                         status={comentario.status}
-                        leadsType={comentario.leads || leads}
+                        leadsType={comentario.tabela || leads}
                     />
                 ))}
             </ComentariosContainer>
 
             <ComentariosInput
-                messageText={project.texto || ''}
+                messageText={project.nota || ''}
                 onSend={handleSend}
                 selectValue={project.status}
                 handleChange={handleChange}

@@ -1,5 +1,6 @@
 import { lazy, Suspense } from 'react';
 import { Routes, Route } from 'react-router-dom';
+import { LeadsFranqueadoraPrincipal } from '../pages/leads/franqueadora';
 
 // Pages
 const NotFound = lazy(() => import('../pages/NotFound'));
@@ -83,7 +84,10 @@ export const AppRoutes = () => {
         {/* Diario */}
         <Route path="/diario" element={<DiarioPage />} />
 
-        <Route path="/leads" element={<Leads />} />
+        <Route path="/leads/principal" element={<Leads />} />
+
+                <Route path="/leads/franqueadora" element={<LeadsFranqueadoraPrincipal />} />
+
 
         {/* 404 */}
         <Route path="*" element={<NotFound />} />

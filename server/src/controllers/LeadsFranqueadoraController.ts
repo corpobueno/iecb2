@@ -1,10 +1,10 @@
 import { Request, Response } from 'express';
-import { LeadsUseCases } from '../usecases/LeadsUseCases';
+import { LeadsFranqueadoraUseCases } from '../usecases/LeadsFranqueadoraUseCases';
 import { StatusCodes } from 'http-status-codes';
 import { handleError } from '../utils/handleError';
 
-export class LeadsController {
-  constructor(private useCases: LeadsUseCases) {}
+export class LeadsFranqueadoraController {
+  constructor(private useCases: LeadsFranqueadoraUseCases) {}
 
   async find(req: Request, res: Response) {
     try {
@@ -30,8 +30,8 @@ export class LeadsController {
         filter: String(req.query.filter || ''),
         dataInicio: req.query.data_inicio ? String(req.query.data_inicio) : undefined,
         dataFim: req.query.data_fim ? String(req.query.data_fim) : undefined,
-        selecao: req.query.selecao ? String(req.query.selecao) : undefined,
-        usuario: req.query.usuario ? String(req.query.usuario) : undefined,
+        status: req.query.status ? String(req.query.status) : undefined,
+        user: req.query.user ? String(req.query.user) : undefined,
       };
 
       const result = await this.useCases.findPrincipal(filtros);
@@ -81,7 +81,7 @@ export class LeadsController {
 
   async create(req: Request, res: Response) {
     try {
-      const data = { ...req.body, usuario: req.user?.username };
+      const data = { ...req.body, user: req.user?.username };
       const id = await this.useCases.create(data);
       return res.status(StatusCodes.CREATED).json({ id });
     } catch (error) {
@@ -91,10 +91,8 @@ export class LeadsController {
 
   async createComentario(req: Request, res: Response) {
     try {
-      const usuario = req.user?.username;
-
-      const data = { ...req.body };
-      const id = await this.useCases.createComentario(data, usuario ?? '');
+      const data = { ...req.body, user: req.user?.username };
+      const id = await this.useCases.createComentario(data);
       return res.status(StatusCodes.CREATED).json({ id });
     } catch (error) {
       handleError(error, res);

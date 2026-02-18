@@ -244,6 +244,7 @@ export interface ILeadsFiltros {
 // ========================================
 export interface ILeadsComentarioForm {
   idLeads: number;
+  leads: string;
   telefone: string;
   texto: string;
   status: string;
@@ -259,12 +260,70 @@ export interface ILeadsComentario extends ILeadsComentarioForm {
 export interface ILeads extends ILeadsComentarioForm {
   id: number;
   data: Date;
-  leads?: string;
 }
 
 export interface ILeadsPage {
   data: ILeads[];
   totalCount: number;
+}
+
+// ========================================
+// LEADS FRANQUEADORA (tabela leads_franquiados)
+// ========================================
+
+export interface ILeadsFranqueadora {
+  id: number;
+  nome: string;
+  telefone: string;
+  status: string;
+  origem: string;
+  email: string | null;
+  rede: number | null;
+  dataCadastro: string;
+  user: string | null;
+  cidade: string;
+  estado: string;
+}
+
+export interface ILeadsFranqueadoraPage {
+  data: ILeadsFranqueadora[];
+  totalCount: number;
+}
+
+export interface ILeadsFranqueadoraForm {
+  nome: string;
+  telefone: string;
+  email?: string;
+  status?: string;
+  origem?: string;
+  rede?: number;
+  user?: string;
+  cidade?: string;
+  estado?: string;
+}
+
+export interface ILeadsFranqueadoraFiltros {
+  page: number;
+  limit?: number;
+  filter?: string;
+  data_inicio?: string;
+  data_fim?: string;
+  status?: string;
+  user?: string;
+}
+
+export interface ILeadsFranqueadoraComentarioForm {
+  idLeads: number;
+  telefone: string;
+  nota: string;
+  status: string;
+  user?: string;
+  tabela: string;
+}
+
+export interface ILeadsFranqueadoraComentario extends ILeadsFranqueadoraComentarioForm {
+  id: number;
+  data: Date;
 }
 
 // ========================================

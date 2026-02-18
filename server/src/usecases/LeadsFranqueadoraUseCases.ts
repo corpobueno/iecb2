@@ -1,26 +1,26 @@
-import { ILeads, ILeadsForm, ILeadsPrincipal, ILeadsFiltros, ILeadsComentarioForm } from '../entities/ILeads';
-import LeadsRepository from '../repositories/LeadsRepository';
+import { ILeadsFranqueadora, ILeadsFranqueadoraForm, ILeadsFranqueadoraComentario, ILeadsFranqueadoraFiltros, ILeadsFranqueadoraComentarioForm } from '../entities/ILeadsFranqueadora';
+import LeadsFranqueadoraRepository from '../repositories/LeadsFranqueadoraRepository';
 import { AppError } from '../utils/AppError';
 
-export class LeadsUseCases {
-  constructor(private repository: LeadsRepository) {}
+export class LeadsFranqueadoraUseCases {
+  constructor(private repository: LeadsFranqueadoraRepository) {}
 
-  async find(page: number, limit: number, filter: string): Promise<{ data: ILeads[]; totalCount: number }> {
+  async find(page: number, limit: number, filter: string): Promise<{ data: ILeadsFranqueadora[]; totalCount: number }> {
     return this.repository.find(page, limit, filter);
   }
 
-  async findPrincipal(filtros: ILeadsFiltros): Promise<{ data: ILeadsPrincipal[]; totalCount: number }> {
+  async findPrincipal(filtros: ILeadsFranqueadoraFiltros): Promise<{ data: ILeadsFranqueadora[]; totalCount: number }> {
     return this.repository.findPrincipal(filtros);
   }
 
-  async getComentariosByTelefone(telefone: string): Promise<ILeads[]> {
+  async getComentariosByTelefone(telefone: string): Promise<ILeadsFranqueadoraComentario[]> {
     if (!telefone) {
       throw new AppError('Telefone é obrigatório', 400);
     }
     return this.repository.getComentariosByTelefone(telefone);
   }
 
-  async getById(id: number): Promise<ILeadsPrincipal | null> {
+  async getById(id: number): Promise<ILeadsFranqueadora | null> {
     const result = await this.repository.getById(id);
     if (!result) {
       throw new AppError('Lead não encontrado', 404);
@@ -28,7 +28,7 @@ export class LeadsUseCases {
     return result;
   }
 
-  async create(data: ILeadsForm): Promise<number> {
+  async create(data: ILeadsFranqueadoraForm): Promise<number> {
     if (!data.telefone) {
       throw new AppError('Telefone é obrigatório', 400);
     }
@@ -38,25 +38,25 @@ export class LeadsUseCases {
     return this.repository.create(data);
   }
 
-  async createComentario(data: ILeadsComentarioForm, usuario: string): Promise<number> {
-  const { telefone, texto, status, idLeads } = data;
+  async createComentario(data: ILeadsFranqueadoraComentarioForm): Promise<number> {
+    const { telefone, nota, status, idLeads } = data;
 
     if (!telefone) {
       throw new AppError('Telefone é obrigatório', 400);
     }
-    if (!texto) {
-      throw new AppError('Texto/comentário é obrigatório', 400);
+    if (!nota) {
+      throw new AppError('Nota/comentário é obrigatório', 400);
     }
     if (!status) {
       throw new AppError('Status é obrigatório', 400);
     }
 
-    await this.repository.update(idLeads, { selecao: status, usuario })
+    await this.repository.update(idLeads, { status });
 
     return this.repository.createComentario(data);
   }
 
-  async update(id: number, data: Partial<ILeadsForm>): Promise<void> {
+  async update(id: number, data: Partial<ILeadsFranqueadoraForm>): Promise<void> {
     const existing = await this.repository.getById(id);
     if (!existing) {
       throw new AppError('Lead não encontrado', 404);

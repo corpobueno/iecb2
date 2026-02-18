@@ -55,11 +55,29 @@ export const leads_nao_vieram = leads_principal
 
 export const leads_aniversario = leads_renegociacao
 
+// Status para leads Franqueadora
+export const leads_franquiados = [
+  { id: 0, label: 'Leads', color: '#ddd'},
+  { id: 1, label: 'Em atendimento', color: '#ddd'},
+  { id: 2, label: 'Sem resposta', color: '#ddd'},
+  { id: 11, label: 'Sem interesse', color: '#ddd'},
+  { id: 3, label: 'Mornos', color: '#ddd'},
+  { id: 4, label: 'Cadastro enviado', color: '#ddd'},
+  { id: 5, label: 'Cadastro preenchido', color: '#ddd'},
+  { id: 7, label: 'Reunião agendada', color: '#ddd'},
+  { id: 8, label: 'COF enviada', color: '#ddd'},
+  { id: 9, label: 'COF assinada', color: '#ddd'},
+  { id: 10, label: 'Contrato assinado', color: '#ddd'},
+  { id: 6, label: 'Lixeira', color: '#ddd'},
+]
+
+
+
 // Status para leads IECB
 export const leads_iecb = [
   { id: 'nao', label: 'Novos', color: '#DD35E6', icon: 'hourglass_empty' },
   { id: '7', label: 'Atendendo', color: '#0066ff', icon: 'check' },
-  { id: 'Mens', label: 'Mensagem Enviada', color: '#cc00ff', icon: 'check' }, 
+  { id: 'Mens', label: 'Mensagem Enviada', color: '#cc00ff', icon: 'check' },
   { id: '1', label: 'Agendado', color: '#229430', icon: 'check' },
   { id: '2', label: 'Sem Interesse', color: '#999999', icon: 'check' },
   { id: '3', label: 'Outro Momento', color: '#FAB307', icon: 'check' },
@@ -81,7 +99,7 @@ export const list = {
   leads_nao_vieram,
   leads_aniversario,
   leads_iecb,
-
+  leads_franquiados,
 }
 
 export const getStatus = (leads: string, id: string) => {

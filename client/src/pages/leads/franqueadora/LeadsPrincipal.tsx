@@ -1,39 +1,38 @@
 import { useMediaQuery, Theme, Modal, Box } from "@mui/material";
 import { useState } from "react";
+import dayjs from "dayjs";
 import { ToggleButtonStatus } from "../layouts/ToggleButtonStatus";
 import { LeadsKanban } from "../layouts/LeadsKanban";
-import { MessageTabs } from "../components/MessageTabs";
+import { MessageTabsFranqueadora } from "../components/MessageTabsFranqueadora";
 import { LeadsFiltros } from "../components/LeadsFiltros";
 import { getStatusList } from "../status";
-import { LeadsPrincipalListContainer } from "./LeadsPrincipalListContainer";
+import { LeadsFranqueadoraListContainer } from "./LeadsFranqueadoraListContainer";
 import { PageContainer } from "../../../components/containers/PageContainer";
 import { SearchToolbar } from "../../../components/contents/SearchToolbar";
-import { ILeadsPrincipal } from "../../../entities/Iecb";
+import { ILeadsFranqueadora } from "../../../entities/Iecb";
 
-const LeadsPrincipal: React.FC = () => {
+const LeadsFranqueadoraPrincipal: React.FC = () => {
 
     const initialFilters = {
         page: 1,
         filter: '',
-        data_inicio: '',
-        data_fim: '',
-        selecao: '',
-        usuario: '',
+        data_inicio: dayjs().startOf('month').format('YYYY-MM-DD'),
+        data_fim: dayjs().endOf('month').format('YYYY-MM-DD'),
+        status: '',
+        user: '',
     }
     const [searchParams, setSearchParams] = useState<any>(initialFilters);
-    const statusLeads = getStatusList('leads_iecb');
+    const statusLeads = getStatusList('leads_franquiados');
     const [modalIsOpen, setModalIsOpen] = useState(false);
 
-    const [currentLead, setCurrentLead] = useState<ILeadsPrincipal | null>(null);
+    const [currentLead, setCurrentLead] = useState<ILeadsFranqueadora | null>(null);
 
-    const handleOpenComentarios = (lead: ILeadsPrincipal) => {
-    
+    const handleOpenComentarios = (lead: ILeadsFranqueadora) => {
         setCurrentLead(lead);
         setModalIsOpen(true);
     }
 
-    const handleOpenDetalhe = (lead: ILeadsPrincipal) => {
-     
+    const handleOpenDetalhe = (lead: ILeadsFranqueadora) => {
         setCurrentLead(lead);
         setModalIsOpen(true);
     }
@@ -41,7 +40,6 @@ const LeadsPrincipal: React.FC = () => {
     const loadData = async () => {
         setSearchParams({ ...searchParams, att: !searchParams.att });
     }
-
 
     const mdDown = useMediaQuery((theme: Theme) => theme.breakpoints.down("md"));
 
@@ -68,7 +66,7 @@ const LeadsPrincipal: React.FC = () => {
                         setSearchParams={setSearchParams}
                     />
 
-                    <LeadsPrincipalListContainer
+                    <LeadsFranqueadoraListContainer
                         handleOpenComentarios={handleOpenComentarios}
                         handleOpenDetalhe={handleOpenDetalhe}
                         searchParams={searchParams}
@@ -80,13 +78,13 @@ const LeadsPrincipal: React.FC = () => {
                     <LeadsKanban>
                         {
                             statusLeads.map((status) => (
-                                <LeadsPrincipalListContainer
+                                <LeadsFranqueadoraListContainer
                                     title={status.label}
                                     statusColor={status.color}
                                     key={status.id}
                                     handleOpenComentarios={handleOpenComentarios}
                                     handleOpenDetalhe={handleOpenDetalhe}
-                                    searchParams={{ ...searchParams, selecao: status.id }}
+                                    searchParams={{ ...searchParams, status: status.id }}
                                 />
                             ))
                         }
@@ -108,8 +106,8 @@ const LeadsPrincipal: React.FC = () => {
                     maxHeight: 'calc(100vh - 0px)',
                     overflow: 'auto',
                 }}>
-                    <MessageTabs
-                        leads={'leads_iecb'}
+                    <MessageTabsFranqueadora
+                        leads={'leads_franquiados'}
                         lead={currentLead}
                         reloadList={loadData}
                     />
@@ -119,4 +117,4 @@ const LeadsPrincipal: React.FC = () => {
     );
 };
 
-export default LeadsPrincipal;
+export default LeadsFranqueadoraPrincipal;
