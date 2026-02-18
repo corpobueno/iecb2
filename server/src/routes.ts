@@ -31,6 +31,7 @@ export default (
   // =====================================================
   // AUTH ROUTES
   // =====================================================
+  router.post('/auth/iframe', (req, res) => authController.authIframe(req, res));
   router.post('/auth/frame-token', (req, res) => authController.authFrameToken(req, res));
   router.post('/auth/admin', (req, res) => authController.authAdminPassword(req, res));
   router.post('/auth/logout', (req, res) => authController.logout(req, res));

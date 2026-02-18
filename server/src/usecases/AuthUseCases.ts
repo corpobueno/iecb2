@@ -78,6 +78,40 @@ export class AuthUseCases {
   }
 
   /**
+   * Autentica via iframe de domínio autorizado
+   * Cria sessão para acesso via iframe autorizado com o login do usuário
+   */
+  async authIframe(referrer: string, login?: string): Promise<IAuthResult | Error> {
+    try {
+      const username = login || 'iframe-user';
+
+      // Gera JWT com dados do usuário passado pelo iframe
+      const accessToken = AuthService.generateToken(
+        username,
+        1, // companyId padrão
+        0, // lite
+        1  // groupId padrão
+      );
+
+      if (accessToken === 'JWT_SECRET_NOT_FOUND') {
+        throw new AppError('Erro ao gerar token de acesso', StatusCodes.INTERNAL_SERVER_ERROR);
+      }
+
+      return {
+        username,
+        accessToken,
+        groupId: 1,
+        companyId: 1,
+        name: username,
+      };
+    } catch (error) {
+      if (error instanceof AppError) throw error;
+      console.error('Erro ao autenticar iframe:', error);
+      throw new AppError('Erro ao autenticar via iframe', StatusCodes.INTERNAL_SERVER_ERROR);
+    }
+  }
+
+  /**
    * Autentica via senha de administrador
    * Método reserva para acesso direto (será removido no futuro)
    */

@@ -44,6 +44,54 @@ export class AuthController {
   }
 
   /**
+   * Autentica via iframe de domínio autorizado
+   * Verifica o referrer e cria sessão automaticamente
+   */
+  async authIframe(req: Request, res: Response) {
+    try {
+      const { referrer, login } = req.body;
+
+      // Lista de domínios autorizados
+      const allowedDomains = [
+        'app.corpobueno.com.br',
+        'app.institutocorpobueno.com.br',
+        'localhost:5174', // Para desenvolvimento
+      ];
+
+      // Verifica se o referrer é de um domínio autorizado
+      const isFromAllowedDomain = allowedDomains.some(domain =>
+        referrer && referrer.includes(domain)
+      );
+
+      if (!isFromAllowedDomain) {
+        return res.status(StatusCodes.UNAUTHORIZED).json({
+          errors: { default: 'Acesso não autorizado' }
+        });
+      }
+
+      const result = await this.authCases.authIframe(referrer, login);
+
+      if (result instanceof Error) {
+        return res.status(StatusCodes.UNAUTHORIZED).json({
+          errors: { default: result.message }
+        });
+      }
+
+      // Define o cookie httpOnly com o token JWT local
+      res.cookie('accessToken', result.accessToken, {
+        httpOnly: true,
+        secure: process.env.NODE_ENV === 'production',
+        maxAge: this.getMsUntilMidnight(),
+        sameSite: 'lax', // Permite uso em iframe
+      });
+
+      return res.status(StatusCodes.OK).json(result);
+    } catch (error) {
+      handleError(error, res);
+    }
+  }
+
+  /**
    * Autentica via senha de administrador
    * Método reserva para quando não houver token (será removido no futuro)
    */

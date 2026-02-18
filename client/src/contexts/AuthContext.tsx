@@ -1,5 +1,5 @@
 import { createContext, useContext, useEffect, useState, ReactNode } from 'react';
-import { CorpoBuenoAuthService, ICorpoBuenoUser } from '../api/services/CorpoBuenoAuthService';
+import { ICorpoBuenoUser } from '../api/services/CorpoBuenoAuthService';
 import { Environment } from '../api/axios-config/environment';
 
 interface IAuthContextData {
@@ -66,29 +66,47 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
 
   useEffect(() => {
     const authenticateWithToken = async () => {
-      // Captura o token da URL
-      const token = CorpoBuenoAuthService.getTokenFromUrl();
+      // Verifica se está dentro de um iframe
+      const isInIframe = window.self !== window.top;
 
-      if (!token) {
+      // Lista de domínios autorizados
+      const allowedDomains = [
+        'app.corpobueno.com.br',
+        'app.institutocorpobueno.com.br',
+        'localhost:5174', // Para desenvolvimento
+      ];
+
+      // Verifica se o referrer é de um domínio autorizado
+      const referrer = document.referrer;
+      const isFromAllowedDomain = allowedDomains.some(domain =>
+        referrer.includes(domain)
+      );
+
+      // Se não está em iframe de domínio autorizado, exige autenticação
+      if (!isInIframe || !isFromAllowedDomain) {
         setError('Acesso não autorizado. Este sistema só pode ser acessado através do sistema principal.');
         setIsLoading(false);
         return;
       }
 
       try {
-        // Autentica com o backend IECB usando o token
-        const response = await fetch(`${Environment.URL_BASE}/auth/frame-token`, {
+        // Captura o login da URL (passado pelo Corpo Bueno)
+        const urlParams = new URLSearchParams(window.location.search);
+        const login = urlParams.get('login') || 'iframe-user';
+
+        // Autentica automaticamente via iframe autorizado
+        const response = await fetch(`${Environment.URL_BASE}/auth/iframe`, {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json',
           },
           credentials: 'include',
-          body: JSON.stringify({ token }),
+          body: JSON.stringify({ referrer, login }),
         });
 
         if (!response.ok) {
           const errorData = await response.json().catch(() => ({}));
-          setError(errorData.errors?.default || 'Token inválido ou expirado');
+          setError(errorData.errors?.default || 'Erro ao autenticar');
           setIsLoading(false);
           return;
         }
@@ -105,11 +123,8 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
           grupo: userData.groupId,
         };
 
-        // Token válido - armazena dados do usuário
+        // Armazena dados do usuário
         setUser(authenticatedUser);
-
-        // Remove o token da URL por segurança
-        CorpoBuenoAuthService.clearTokenFromUrl();
 
         // Armazena na sessionStorage para persistir durante a sessão do iframe
         sessionStorage.setItem('iecb_user', JSON.stringify(authenticatedUser));
