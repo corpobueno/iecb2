@@ -1,6 +1,6 @@
-import React, { useEffect, useState } from 'react';
-import { Box, Chip, Icon, IconButton, MenuItem, TableBody, TableCell, TableRow, TextField, Typography } from '@mui/material';
-import { useNavigate, useSearchParams } from 'react-router-dom';
+import { useEffect, useState } from 'react';
+import { Chip, Icon, IconButton, MenuItem, TableBody, TableCell, TableRow, TextField, Typography } from '@mui/material';
+import { useNavigate } from 'react-router-dom';
 import { AlunoService } from '../../api/services/AlunoService';
 import { AulaService } from '../../api/services/AulaService';
 import { VTable, VTableFooter } from '../../components/grids/VTable';
@@ -11,7 +11,6 @@ import { useSnackbar } from '../../contexts/SnackBarProvider';
 import { toTel } from '../../utils/functions';
 
 const AlunoList = () => {
-  const [searchParams, setSearchParams] = useSearchParams();
   const { showSnackbarMessage } = useSnackbar();
   const navigate = useNavigate();
 

@@ -101,7 +101,7 @@ export const ComentariosInput: React.FC<MessageInputProps> = ({
   const popoverId = popoverOpen ? 'status-popover' : undefined;
 
   useEffect(() => {
-    let timer: NodeJS.Timeout;
+    let timer: ReturnType<typeof setInterval>;
 
     if (isSending) {
       setIsProgressActive(true);

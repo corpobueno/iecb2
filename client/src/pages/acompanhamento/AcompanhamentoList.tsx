@@ -1,4 +1,4 @@
-import React, { useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { Box, Icon, IconButton, Pagination, TableBody, TableCell, TableRow, Typography } from '@mui/material';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import { AcompanhamentoService } from '../../api/services/AcompanhamentoService';

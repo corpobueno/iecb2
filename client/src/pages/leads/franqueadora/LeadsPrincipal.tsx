@@ -1,6 +1,5 @@
 import { useMediaQuery, Theme, Modal, Box } from "@mui/material";
 import { useState } from "react";
-import dayjs from "dayjs";
 import { ToggleButtonStatus } from "../layouts/ToggleButtonStatus";
 import { LeadsKanban } from "../layouts/LeadsKanban";
 import { MessageTabsFranqueadora } from "../components/MessageTabsFranqueadora";

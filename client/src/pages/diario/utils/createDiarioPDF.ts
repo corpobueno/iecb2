@@ -1,20 +1,13 @@
 import { IDiarioAula, IDiarioFilters } from '../../../entities/Iecb';
 import { toCash } from '../../../utils/functions';
+import jsPDF from 'jspdf';
 
 export async function createDiarioPDF(filters: IDiarioFilters, aulas: IDiarioAula[]) {
-  // Dynamic imports to handle Vite's module system
-  const pdfMakeModule = await import('pdfmake/build/pdfmake');
-  const pdfFontsModule = await import('pdfmake/build/vfs_fonts');
-
-  const pdfMake = pdfMakeModule.default || pdfMakeModule;
-  const pdfFonts = pdfFontsModule.default || pdfFontsModule;
-
-  // Setup vfs fonts
-  if (pdfFonts.pdfMake?.vfs) {
-    pdfMake.vfs = pdfFonts.pdfMake.vfs;
-  } else if ((pdfFonts as any).vfs) {
-    pdfMake.vfs = (pdfFonts as any).vfs;
-  }
+  const doc = new jsPDF('p', 'mm', 'a4');
+  const pageWidth = doc.internal.pageSize.getWidth();
+  const margin = 15;
+  const contentWidth = pageWidth - margin * 2;
+  let y = margin;
 
   let rateioGeral = 0;
 
@@ -43,175 +36,124 @@ export async function createDiarioPDF(filters: IDiarioFilters, aulas: IDiarioAul
     return dateStr.split('-').reverse().join('/');
   };
 
-  const title = [
-    {
-      table: {
-        widths: ['100%'],
-        body: [
-          [
-            {
-              text: `Relatório por período: ${formatDate(filters.dataInicio)} à ${formatDate(filters.dataFim)}\nUnidade: IECB`,
-              fontSize: 15,
-              bold: true,
-              margin: [5, 5, 20, 5],
-              lineHeight: 0.7,
-            },
-          ],
-        ],
-      },
-    },
-  ];
+  const checkPageBreak = (requiredHeight: number) => {
+    const pageHeight = doc.internal.pageSize.getHeight();
+    if (y + requiredHeight > pageHeight - margin) {
+      doc.addPage();
+      y = margin;
+    }
+  };
 
-  const pagamentos = aulas.map((aula) => {
-    // Filter only paid students for commission calculation
+  // Title
+  doc.setFontSize(15);
+  doc.setFont('helvetica', 'bold');
+  doc.text(`Relatório por período: ${formatDate(filters.dataInicio)} à ${formatDate(filters.dataFim)}`, margin, y);
+  y += 6;
+  doc.text('Unidade: IECB', margin, y);
+  y += 10;
+
+  // Process each aula
+  for (const aula of aulas) {
     const alunosParaRelatorio = aula.alunos.filter(
       (aluno) => aluno.status === 1 && (aluno.tipo === 1 || (aula.rateioModelo && aluno.tipo === 2))
     );
 
-    const resultAula = alunosParaRelatorio.map((aluno) => {
-      const rateio = calculateRateioAluno(aula, aluno);
+    if (alunosParaRelatorio.length === 0) continue;
 
-      return [
-        {
-          text: aluno.tipo === 1 ? 'A' : 'M',
-          fontSize: 11,
-          margin: [0, 2, 0, 2],
-        },
-        {
-          text: aluno.nomeAluno,
-          fontSize: 11,
-          margin: [0, 2, 0, 2],
-        },
-        {
-          text: toCash(aluno.valor),
-          fontSize: 11,
-          margin: [0, 2, 0, 2],
-          noWrap: true,
-        },
-        {
-          text: toCash(rateio),
-          fontSize: 11,
-          margin: [0, 2, 0, 2],
-          noWrap: true,
-        },
-        {
-          text: aluno.status ? 'Pago' : 'Pendente',
-          italics: true,
-          fontSize: 11,
-          margin: [0, 2, 0, 2],
-          noWrap: true,
-        },
-      ];
+    // Estimate height needed for this section
+    const sectionHeight = 30 + (alunosParaRelatorio.length + 2) * 7;
+    checkPageBreak(sectionHeight);
+
+    // Aula header
+    doc.setFontSize(14);
+    doc.setFont('helvetica', 'normal');
+    doc.text(`${aula.nomeDocente} - ${aula.nomeCurso}`, margin, y);
+    y += 8;
+
+    // Table header
+    doc.setFontSize(11);
+    doc.setFont('helvetica', 'bold');
+    const colWidths = [10, 80, 35, 35, 25];
+    const headers = ['', 'Nome', 'Valor', 'Rateio', 'Status'];
+
+    // Draw header background
+    doc.setFillColor(240, 240, 240);
+    doc.rect(margin, y - 4, contentWidth, 7, 'F');
+
+    let x = margin;
+    headers.forEach((header, i) => {
+      doc.text(header, x + 2, y);
+      x += colWidths[i];
     });
+    y += 7;
 
+    // Draw header line
+    doc.setDrawColor(200, 200, 200);
+    doc.line(margin, y - 3, margin + contentWidth, y - 3);
+
+    // Table rows
+    doc.setFont('helvetica', 'normal');
+    doc.setFontSize(10);
+
+    for (const aluno of alunosParaRelatorio) {
+      checkPageBreak(8);
+
+      const rateio = calculateRateioAluno(aula, aluno);
+      x = margin;
+
+      // Type column
+      doc.text(aluno.tipo === 1 ? 'A' : 'M', x + 2, y);
+      x += colWidths[0];
+
+      // Name column (truncate if too long)
+      const nome = aluno.nomeAluno.length > 35 ? aluno.nomeAluno.substring(0, 32) + '...' : aluno.nomeAluno;
+      doc.text(nome, x + 2, y);
+      x += colWidths[1];
+
+      // Value column
+      doc.text(toCash(aluno.valor), x + 2, y);
+      x += colWidths[2];
+
+      // Rateio column
+      doc.text(toCash(rateio), x + 2, y);
+      x += colWidths[3];
+
+      // Status column
+      doc.setFont('helvetica', 'italic');
+      doc.text(aluno.status ? 'Pago' : 'Pendente', x + 2, y);
+      doc.setFont('helvetica', 'normal');
+
+      y += 6;
+
+      // Draw light line
+      doc.setDrawColor(230, 230, 230);
+      doc.line(margin, y - 2, margin + contentWidth, y - 2);
+    }
+
+    // Total row
     const totalRateioAula = calculateRateioAula(aula);
+    checkPageBreak(10);
 
-    const totalRow = [
-      {},
-      {
-        text: 'Total',
-        bold: true,
-        fontSize: 13,
-        margin: [0, 2, 0, 2],
-        noWrap: true,
-      },
-      {
-        text: '',
-        bold: true,
-        fontSize: 13,
-        margin: [0, 2, 0, 2],
-        noWrap: true,
-      },
-      {
-        text: toCash(totalRateioAula),
-        bold: true,
-        fontSize: 13,
-        margin: [0, 2, 0, 2],
-        noWrap: true,
-      },
-      {},
-    ];
+    doc.setFont('helvetica', 'bold');
+    doc.setFontSize(11);
+    x = margin + colWidths[0];
+    doc.text('Total', x + 2, y);
+    x += colWidths[1] + colWidths[2];
+    doc.text(toCash(totalRateioAula), x + 2, y);
 
-    return [
-      {
-        table: {
-          widths: ['*'],
-          body: [
-            [
-              {
-                text: `${aula.nomeDocente} - ${aula.nomeCurso}`,
-                fontSize: 16,
-                margin: [2, 2, 2, 2],
-              },
-            ],
-          ],
-        },
-        layout: 'noBorders',
-        margin: [2, 2, 2, 2],
-      },
-      {
-        table: {
-          headerRows: 1,
-          widths: [10, 200, 70, 70, 30],
-          body: [
-            [
-              { border: [true, true, true, true], text: '', style: 'tableHeader', fontSize: 13, bold: true },
-              { border: [true, true, true, true], text: 'Nome', style: 'tableHeader', fontSize: 13, bold: true },
-              { border: [true, true, true, true], text: 'Valor', style: 'tableHeader', fontSize: 13, bold: true },
-              { border: [true, true, true, true], text: 'Rateio', style: 'tableHeader', fontSize: 13, bold: true },
-              { border: [true, true, true, true], text: '*', style: 'tableHeader', fontSize: 13, bold: true },
-            ],
-            ...resultAula,
-            totalRow,
-          ],
-        },
-        layout: 'lightHorizontalLines',
-      },
-    ];
-  });
+    y += 12;
+  }
 
-  const totalGeral = {
-    table: {
-      widths: ['auto', 'auto'],
-      body: [
-        [
-          {
-            text: 'Total Rateio',
-            bold: true,
-            fontSize: 15,
-            alignment: 'left',
-            margin: [0, 5, 0, 5],
-            decoration: 'underline',
-          },
-          {
-            text: toCash(rateioGeral),
-            bold: true,
-            fontSize: 15,
-            margin: [0, 5, 0, 5],
-            decoration: 'underline',
-            noWrap: true,
-          },
-        ],
-      ],
-    },
-    layout: 'noBorders',
-    margin: [0, 10, 0, 0],
-  };
+  // Total geral
+  checkPageBreak(20);
+  y += 5;
+  doc.setFont('helvetica', 'bold');
+  doc.setFontSize(14);
+  doc.text('Total Rateio:', margin, y);
+  doc.text(toCash(rateioGeral), margin + 40, y);
 
-  const pdfContent = [...pagamentos.flat(), totalGeral];
-
-  const docDefinitions: any = {
-    pageSize: 'A4',
-    pageMargins: [15, 15, 15, 15],
-    content: [title, ...pdfContent],
-    layout: 'lightHorizontalLines',
-    pageBreakBefore: function (
-      currentNode: any,
-      followingNodesOnPage: any[],
-    ) {
-      return currentNode.headlineLevel === 1 && followingNodesOnPage.length === 0;
-    },
-  };
-
-  pdfMake.createPdf(docDefinitions).open();
+  // Open PDF
+  const pdfBlob = doc.output('blob');
+  const pdfUrl = URL.createObjectURL(pdfBlob);
+  window.open(pdfUrl, '_blank');
 }

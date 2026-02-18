@@ -70,7 +70,7 @@ interface IExportDialogProps {
     open: boolean;
     onClose: () => void;
     onConfirm: (selecao: string, format: ExportFormat) => void;
-    statusList: Array<{ id: string; label: string; color: string }>;
+    statusList: Array<{ id: string | number; label: string; color: string }>;
 }
 
 export const ExportDialog: React.FC<IExportDialogProps> = ({ open, onClose, onConfirm, statusList }) => {

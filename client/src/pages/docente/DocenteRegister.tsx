@@ -16,7 +16,7 @@ const formValidationSchema = yup.object().shape({
   rateio: yup.number().optional(),
   rateioRegular: yup.number().optional(),
   color: yup.string().optional(),
-  ativo: yup.boolean().optional(),
+  ativo: yup.number().optional(),
 });
 
 const DocenteRegister: React.FC = () => {
@@ -50,12 +50,7 @@ const DocenteRegister: React.FC = () => {
         setProject(resp);
         Object.keys(resp).forEach((key) => {
           const value = resp[key as keyof IDocenteForm];
-          // Converter ativo de number para boolean para o Switch
-          if (key === 'ativo') {
-            methods.setValue('ativo', value === 1);
-          } else {
-            methods.setValue(key as keyof IDocenteForm, value);
-          }
+          methods.setValue(key as keyof IDocenteForm, value);
         });
       } catch (error) {
         showSnackbarMessage((error as Error).message, 'error');

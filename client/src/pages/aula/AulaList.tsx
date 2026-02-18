@@ -1,5 +1,5 @@
-import React, { useEffect, useState } from 'react';
-import { Box, Chip, Icon, IconButton, TableBody, TableCell, TableRow, Typography } from '@mui/material';
+import { useEffect, useState } from 'react';
+import { Box, Icon, IconButton, TableBody, TableCell, TableRow, Typography } from '@mui/material';
 import { useNavigate } from 'react-router-dom';
 import { AulaService } from '../../api/services/AulaService';
 import { VTable, VTableFooter } from '../../components/grids/VTable';

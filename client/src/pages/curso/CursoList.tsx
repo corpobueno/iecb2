@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import { useEffect, useState } from 'react';
 import { Box, Icon, IconButton, TableBody, TableCell, TableRow, Typography } from '@mui/material';
 import { useNavigate } from 'react-router-dom';
 import { CursoService } from '../../api/services/CursoService';

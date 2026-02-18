@@ -13,11 +13,14 @@ import { useSnackbar } from '../../contexts/SnackBarProvider';
 const formValidationSchema = yup.object().shape({
   nome: yup.string().required('Nome é obrigatório').min(3, 'Mínimo 3 caracteres'),
   telefone: yup.string().required('Telefone é obrigatório'),
-  email: yup.string().email('Email inválido').optional().nullable(),
-  endereco: yup.string().optional().nullable(),
-  dataNascimento: yup.string().optional().nullable(),
-  interesse: yup.string().optional().nullable(),
-  nota: yup.string().optional().nullable(),
+  email: yup.string().email('Email inválido').optional(),
+  endereco: yup.string().optional(),
+  dataNascimento: yup.string().optional(),
+  interesse: yup.string().optional(),
+  nota: yup.string().optional(),
+  status: yup.number().optional(),
+  usuario: yup.string().optional(),
+  idLeads: yup.number().optional(),
 });
 
 const AcompanhamentoRegister: React.FC = () => {

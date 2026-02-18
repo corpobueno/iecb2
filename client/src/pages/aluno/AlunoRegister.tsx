@@ -18,7 +18,8 @@ const formValidationSchema = yup.object().shape({
   status: yup.number().optional(),
   valor: yup.number().optional(),
   valorMatricula: yup.number().optional(),
-  data: yup.string().optional().nullable(),
+  data: yup.string().optional(),
+  usuario: yup.string().optional(),
 });
 
 const AlunoRegister: React.FC = () => {
