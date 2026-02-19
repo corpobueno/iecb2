@@ -5,6 +5,7 @@ declare global {
       user?: {
         username: string;
         groupId: number;
+        companyId: number;
       };
     }
   }

@@ -391,6 +391,7 @@ export const AgendaDetails = ({ open, onClose, agenda, onRefresh }: AgendaDetail
               showSaveButton={false}
               onClickBack={onClose}
             >
+              {agenda?.usuario}
               <Tooltip title="Replicar">
                 <Button
                   color="primary"

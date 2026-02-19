@@ -1,313 +1,183 @@
-# Implementação de postMessage no Sistema A (Corpo Bueno)
+# Integração Sistema A (Corpo Bueno) com Sistema B (IECB) via postMessage
 
-## Contexto
+## Fluxo Simplificado
 
-O Sistema B (IECB) agora usa um fluxo de autenticação via iframe oculto e postMessage. O Sistema A precisa:
-1. Escutar mensagens postMessage do IECB
-2. Reagir a eventos de autenticação (sucesso, erro, re-auth necessário)
+O Sistema B (IECB) é carregado em um iframe dentro do Sistema A. A autenticação é feita via `postMessage`.
 
-## Mensagens que o Sistema B envia
-
-| Tipo | Quando | Dados |
-|------|--------|-------|
-| `AUTH_SUCCESS` | Autenticação bem-sucedida | `{ type: 'AUTH_SUCCESS', source: 'IECB_AUTH' }` |
-| `AUTH_ERROR` | Erro na autenticação | `{ type: 'AUTH_ERROR', message: 'descrição', source: 'IECB_AUTH' }` |
-| `AUTH_REQUIRED` | Sessão expirada ou usuário diferente | `{ type: 'AUTH_REQUIRED', message: 'descrição', expectedLogin: 'usuario', source: 'IECB_AUTH' }` |
-
-## Implementação Recomendada
-
-### 1. Hook para escutar mensagens do IECB
-
-```typescript
-// hooks/useIECBMessages.ts
-import { useEffect, useCallback } from 'react';
-
-interface IECBMessage {
-  type: 'AUTH_SUCCESS' | 'AUTH_ERROR' | 'AUTH_REQUIRED';
-  message?: string;
-  expectedLogin?: string;
-  source?: string;
-}
-
-interface UseIECBMessagesProps {
-  onAuthSuccess: () => void;
-  onAuthError: (message: string) => void;
-  onAuthRequired: (expectedLogin?: string) => void;
-}
-
-export const useIECBMessages = ({
-  onAuthSuccess,
-  onAuthError,
-  onAuthRequired,
-}: UseIECBMessagesProps) => {
-
-  const handleMessage = useCallback((event: MessageEvent<IECBMessage>) => {
-    // Ignora mensagens que não são do IECB
-    if (event.data?.source !== 'IECB_AUTH') return;
-
-    console.log('[useIECBMessages] Mensagem recebida:', event.data);
-
-    switch (event.data.type) {
-      case 'AUTH_SUCCESS':
-        onAuthSuccess();
-        break;
-      case 'AUTH_ERROR':
-        onAuthError(event.data.message || 'Erro desconhecido');
-        break;
-      case 'AUTH_REQUIRED':
-        onAuthRequired(event.data.expectedLogin);
-        break;
-    }
-  }, [onAuthSuccess, onAuthError, onAuthRequired]);
-
-  useEffect(() => {
-    window.addEventListener('message', handleMessage);
-    return () => window.removeEventListener('message', handleMessage);
-  }, [handleMessage]);
-};
+```
+Sistema A                          Sistema B (iframe)
+    |                                     |
+    |  1. Carrega iframe                  |
+    |------------------------------------>|
+    |                                     |
+    |  2. postMessage AUTH_DATA           |
+    |  (frameToken, usuario, empresa,     |
+    |   grupo)                            |
+    |------------------------------------>|
+    |                                     |
+    |                           3. Chama backend
+    |                              /auth/post-message
+    |                                     |
+    |  4. postMessage AUTH_SUCCESS        |
+    |<------------------------------------|
+    |     ou AUTH_ERROR                   |
 ```
 
-### 2. Componente Frame.tsx Atualizado
+## Implementação no Sistema A
+
+### 1. Componente do Iframe
 
 ```tsx
-// components/IECBFrame.tsx
-import { useState, useEffect, useRef, useCallback } from 'react';
-import { useIECBMessages } from '../hooks/useIECBMessages';
+import { useEffect, useRef, useState } from 'react';
+
+const IECB_URL = 'https://app.institutocorpobueno.com.br';
+const FRAME_TOKEN = 'SEU_FRAME_TOKEN_COMPARTILHADO'; // Mesmo valor do .env do Sistema B
 
 interface IECBFrameProps {
-  user: { login: string; empresa: number; unidade: number; grupo: number };
+  usuario: string;    // Login do usuário
+  empresa: number;    // ID da empresa
+  grupo: number;      // ID do grupo
+  path?: string;      // Rota inicial (ex: '/acompanhamento')
 }
 
-type AuthState = 'idle' | 'authenticating' | 'authenticated' | 'error';
-
-const IECB_BACKEND_URL = process.env.IECB_BACKEND_URL || 'https://backend.institutocorpobueno.com.br';
-const IECB_FRONTEND_URL = process.env.IECB_FRONTEND_URL || 'https://app.institutocorpobueno.com.br';
-const FRAME_TOKEN = process.env.FRAME_TOKEN;
-
-export const IECBFrame = ({ user }: IECBFrameProps) => {
-  const [authState, setAuthState] = useState<AuthState>('idle');
+export const IECBFrame: React.FC<IECBFrameProps> = ({
+  usuario,
+  empresa,
+  grupo,
+  path = '/'
+}) => {
+  const iframeRef = useRef<HTMLIFrameElement>(null);
+  const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const hiddenIframeRef = useRef<HTMLIFrameElement | null>(null);
-  const currentTokenRef = useRef<string | null>(null);
 
-  // Função para iniciar autenticação
-  const startAuth = useCallback(async () => {
-    setAuthState('authenticating');
-    setError(null);
-
-    try {
-      // 1. Gera token único
-      const embedToken = crypto.randomUUID();
-      currentTokenRef.current = embedToken;
-
-      // 2. Registra token no backend do IECB
-      const response = await fetch(`${IECB_BACKEND_URL}/auth/register-embed-token`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          embedToken,
-          login: user.login,
-          redirectUrl: window.location.href, // Não usado no fluxo iframe oculto
-          frameToken: FRAME_TOKEN,
-          empresa: user.empresa,
-          unidade: user.unidade,
-          grupo: user.grupo,
-        }),
-      });
-
-      if (!response.ok) {
-        throw new Error('Falha ao registrar token');
+  useEffect(() => {
+    // Escuta mensagens do iframe
+    const handleMessage = (event: MessageEvent) => {
+      // Verifica origem
+      if (!event.origin.includes('institutocorpobueno.com.br') &&
+          !event.origin.includes('localhost')) {
+        return;
       }
 
-      // 3. Cria iframe oculto para autenticação
-      const iframe = document.createElement('iframe');
-      iframe.style.display = 'none';
-      iframe.src = `${IECB_FRONTEND_URL}/auth/init?token=${embedToken}`;
-      document.body.appendChild(iframe);
-      hiddenIframeRef.current = iframe;
+      if (event.data?.source !== 'IECB') return;
 
-      // 4. Timeout de segurança (10 segundos)
-      setTimeout(() => {
-        if (authState === 'authenticating') {
-          setError('Timeout na autenticação');
-          setAuthState('error');
-          removeHiddenIframe();
-        }
-      }, 10000);
+      switch (event.data.type) {
+        case 'AUTH_SUCCESS':
+          console.log('[Sistema A] IECB autenticado com sucesso');
+          setIsAuthenticated(true);
+          setError(null);
+          break;
 
-    } catch (err) {
-      setError(err instanceof Error ? err.message : 'Erro desconhecido');
-      setAuthState('error');
-    }
-  }, [user, authState]);
+        case 'AUTH_ERROR':
+          console.error('[Sistema A] Erro na autenticação IECB:', event.data.message);
+          setError(event.data.message);
+          break;
+      }
+    };
 
-  // Remove iframe oculto
-  const removeHiddenIframe = useCallback(() => {
-    if (hiddenIframeRef.current) {
-      hiddenIframeRef.current.remove();
-      hiddenIframeRef.current = null;
-    }
+    window.addEventListener('message', handleMessage);
+    return () => window.removeEventListener('message', handleMessage);
   }, []);
 
-  // Handlers para mensagens do IECB
-  useIECBMessages({
-    onAuthSuccess: () => {
-      console.log('[IECBFrame] Autenticação bem-sucedida');
-      removeHiddenIframe();
-      setAuthState('authenticated');
-    },
-    onAuthError: (message) => {
-      console.log('[IECBFrame] Erro na autenticação:', message);
-      removeHiddenIframe();
-      setError(message);
-      setAuthState('error');
-    },
-    onAuthRequired: (expectedLogin) => {
-      console.log('[IECBFrame] Re-autenticação necessária para:', expectedLogin);
-      // Reinicia o fluxo de autenticação
-      startAuth();
-    },
-  });
+  // Envia dados de autenticação quando iframe carrega
+  const handleIframeLoad = () => {
+    if (!iframeRef.current?.contentWindow) return;
 
-  // Inicia autenticação ao montar
-  useEffect(() => {
-    startAuth();
-    return () => removeHiddenIframe();
-  }, []);
+    console.log('[Sistema A] Enviando AUTH_DATA para IECB');
 
-  // Re-autentica se o usuário mudar
-  useEffect(() => {
-    if (authState === 'authenticated') {
-      startAuth();
-    }
-  }, [user.login]);
+    iframeRef.current.contentWindow.postMessage({
+      type: 'AUTH_DATA',
+      frameToken: FRAME_TOKEN,
+      usuario,
+      empresa,
+      grupo,
+    }, IECB_URL);
+  };
 
-  if (authState === 'authenticating') {
-    return (
-      <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '100%' }}>
-        <p>Autenticando módulo IECB...</p>
-      </div>
-    );
-  }
+  return (
+    <div style={{ width: '100%', height: '100%' }}>
+      {error && (
+        <div style={{ color: 'red', padding: '10px' }}>
+          Erro: {error}
+        </div>
+      )}
 
-  if (authState === 'error') {
-    return (
-      <div style={{ display: 'flex', flexDirection: 'column', justifyContent: 'center', alignItems: 'center', height: '100%' }}>
-        <p style={{ color: 'red' }}>Erro: {error}</p>
-        <button onClick={startAuth}>Tentar novamente</button>
-      </div>
-    );
-  }
-
-  if (authState === 'authenticated') {
-    return (
       <iframe
-        src={`${IECB_FRONTEND_URL}?login=${user.login}`}
-        style={{ width: '100%', height: '100%', border: 'none' }}
-        title="IECB"
+        ref={iframeRef}
+        src={`${IECB_URL}${path}`}
+        onLoad={handleIframeLoad}
+        style={{
+          width: '100%',
+          height: '100%',
+          border: 'none',
+          display: isAuthenticated ? 'block' : 'none',
+        }}
       />
-    );
-  }
 
-  return null;
+      {!isAuthenticated && !error && (
+        <div style={{ padding: '20px', textAlign: 'center' }}>
+          Carregando...
+        </div>
+      )}
+    </div>
+  );
 };
 ```
 
-### 3. Página que usa o componente
+### 2. Uso do Componente
 
 ```tsx
-// pages/ExternalModule/IECB.tsx
-import { IECBFrame } from '../../components/IECBFrame';
-import { useAuth } from '../../contexts/AuthContext';
+// Em qualquer página do Sistema A
+import { IECBFrame } from './components/IECBFrame';
 
-export const IECBPage = () => {
-  const { user } = useAuth();
-
-  if (!user) {
-    return <p>Usuário não autenticado</p>;
-  }
+const MinhaPageina = () => {
+  const user = useCurrentUser(); // Seu hook de usuário
 
   return (
-    <div style={{ width: '100%', height: '100vh' }}>
+    <div style={{ height: '100vh' }}>
       <IECBFrame
-        user={{
-          login: user.login,
-          empresa: user.empresa,
-          unidade: user.unidade,
-          grupo: user.grupo,
-        }}
+        usuario={user.login}
+        empresa={user.empresa}
+        grupo={user.grupo}
+        path="/acompanhamento"
       />
     </div>
   );
 };
 ```
 
-## Fluxo Completo
+## Configuração
 
-```
-Sistema A                              Sistema B (IECB)
-─────────                              ─────────
-
-1. Usuario abre módulo IECB
-   │
-   ▼
-2. IECBFrame.startAuth()
-   │
-   ├─▶ POST /auth/register-embed-token ──▶ Salva token no cache
-   │
-   ▼
-3. Cria iframe oculto
-   src=/auth/init?token=xxx ─────────────▶ 4. Frontend IECB carrega
-                                              │
-                                              ▼
-                                           5. POST /auth/validate-embed-token
-                                              │
-                                              ▼
-                                           6. Valida token, seta cookie
-                                              │
-                                              ▼
-7. ◀──────────────────────────────────────── postMessage('AUTH_SUCCESS')
-   │
-   ▼
-8. Remove iframe oculto
-   Carrega iframe principal ─────────────▶ 9. IECB carrega autenticado ✓
-   src=/?login=usuario
-
---- Se usuário mudar ou sessão expirar ---
-
-10. IECB detecta mismatch
-    │
-    ▼
-11. ◀─────────────────────────────────────── postMessage('AUTH_REQUIRED')
-    │
-    ▼
-12. IECBFrame.startAuth() (reinicia fluxo)
-```
-
-## Variáveis de Ambiente
+### Sistema B (IECB) - .env
 
 ```env
-IECB_BACKEND_URL=https://backend.institutocorpobueno.com.br
-IECB_FRONTEND_URL=https://app.institutocorpobueno.com.br
-FRAME_TOKEN=9y8R6m1KZpYwFQ3WnB2tXJ4dC0uE5sLhA7qVfN8rTgM
+FRAME_TOKEN=seu_token_secreto_compartilhado
 ```
 
-## Pontos Importantes
+### Sistema A - Constante
 
-1. **Sempre passe `?login=usuario`** na URL do iframe principal para que o IECB saiba qual usuário esperar
+```tsx
+const FRAME_TOKEN = 'seu_token_secreto_compartilhado'; // Mesmo valor!
+```
 
-2. **O iframe oculto é temporário** - só existe durante a autenticação e é removido após `AUTH_SUCCESS` ou `AUTH_ERROR`
+## Mensagens postMessage
 
-3. **Re-autenticação automática** - quando o IECB envia `AUTH_REQUIRED`, o Sistema A deve reiniciar o fluxo de autenticação
+### Sistema A -> Sistema B
 
-4. **Timeout de segurança** - se não receber resposta em 10 segundos, considera erro
+| Tipo | Campos | Descrição |
+|------|--------|-----------|
+| `AUTH_DATA` | `frameToken`, `usuario`, `empresa`, `grupo` | Dados de autenticação |
 
-5. **Troca de usuário** - se o usuário logado no Sistema A mudar, o componente deve reiniciar a autenticação
+### Sistema B -> Sistema A
 
-## Testando
+| Tipo | Campos | Descrição |
+|------|--------|-----------|
+| `AUTH_SUCCESS` | - | Autenticação OK |
+| `AUTH_ERROR` | `message` | Erro na autenticação |
 
-1. Abra o módulo IECB no Sistema A
-2. Deve ver "Autenticando..." brevemente
-3. Depois o iframe principal carrega
-4. Navegue pelo IECB - deve funcionar sem erros de sessão
-5. Troque de usuário no Sistema A e reabra o IECB - deve re-autenticar automaticamente
+## Segurança
+
+1. O `FRAME_TOKEN` é um segredo compartilhado entre os dois sistemas
+2. O backend do Sistema B valida o token antes de criar a sessão
+3. O JWT é armazenado no sessionStorage do iframe (isolado do Sistema A)
+4. Cada requisição do Sistema B envia o JWT no header `Authorization`
