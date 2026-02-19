@@ -55,6 +55,7 @@ export class AuthController {
       const allowedDomains = [
         'app.corpobueno.com.br',
         'app.institutocorpobueno.com.br',
+        'localhost:5173', // Para desenvolvimento
         'localhost:5174', // Para desenvolvimento
       ];
 

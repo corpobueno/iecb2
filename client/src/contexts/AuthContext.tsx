@@ -73,7 +73,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
       const allowedDomains = [
         'app.corpobueno.com.br',
         'app.institutocorpobueno.com.br',
-        'localhost:5174', // Para desenvolvimento
+        'localhost:5173', // Para desenvolvimento
       ];
 
       // Verifica se o referrer é de um domínio autorizado
@@ -84,7 +84,8 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
 
       // Se não está em iframe de domínio autorizado, exige autenticação
       if (!isInIframe || !isFromAllowedDomain) {
-        setError('Acesso não autorizado. Este sistema só pode ser acessado através do sistema principal.');
+        // Debug: mostra informações na tela
+        setError(`Acesso não autorizado. [DEBUG] isInIframe: ${isInIframe}, referrer: "${referrer}", isFromAllowedDomain: ${isFromAllowedDomain}`);
         setIsLoading(false);
         return;
       }
@@ -137,17 +138,13 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
       }
     };
 
-    // Verifica se já tem usuário na sessionStorage (para navegação interna)
-    const storedUser = sessionStorage.getItem('iecb_user');
-    if (storedUser) {
-      try {
-        setUser(JSON.parse(storedUser));
-        setIsLoading(false);
-        return;
-      } catch {
-        sessionStorage.removeItem('iecb_user');
-      }
-    }
+    // DEBUG: Limpa sessionStorage temporariamente para testar
+    sessionStorage.removeItem('iecb_user');
+
+    // Log de debug
+    console.log('[DEBUG] Iniciando autenticação...');
+    console.log('[DEBUG] isInIframe:', window.self !== window.top);
+    console.log('[DEBUG] referrer:', document.referrer);
 
     authenticateWithToken();
   }, []);
