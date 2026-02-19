@@ -42,7 +42,7 @@ const AgendaList = () => {
 
   const [agendas, setAgendas] = useState<IAgenda[]>([]);
   const [isLoading, setIsLoading] = useState(true);
-  const [viewMode, setViewMode] = useState<ViewMode>('week');
+  const [viewMode, setViewMode] = useState<ViewMode>('month');
   const [currentDate, setCurrentDate] = useState(dayjs());
   const [selectedAgenda, setSelectedAgenda] = useState<IAgenda | null>(null);
   const [detailsOpen, setDetailsOpen] = useState(false);

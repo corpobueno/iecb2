@@ -86,7 +86,8 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
 
       // Se não está em iframe de domínio autorizado, exige autenticação
       if (!isInIframe || !isFromAllowedDomain) {
-        setError('Acesso não autorizado. Este sistema só pode ser acessado através do sistema principal.');
+        // Temporário: mostra debug em produção para diagnosticar
+        setError(`[DEBUG] isInIframe: ${isInIframe}, referrer: "${referrer || '(vazio)'}", isAllowed: ${isFromAllowedDomain}`);
         setIsLoading(false);
         return;
       }
