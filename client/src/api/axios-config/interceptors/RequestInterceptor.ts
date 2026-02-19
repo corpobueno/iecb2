@@ -16,8 +16,22 @@ const getUserFromStorage = () => {
   return null;
 };
 
+/**
+ * Obtém o token do sessionStorage
+ * Usado como fallback quando cookies não funcionam (cross-site iframe)
+ */
+const getTokenFromStorage = () => {
+  return sessionStorage.getItem('iecb_token');
+};
+
 export const requestInterceptor = (config: InternalAxiosRequestConfig) => {
   const user = getUserFromStorage();
+  const token = getTokenFromStorage();
+
+  // Adiciona o token no header Authorization (fallback para quando cookie não funciona)
+  if (token) {
+    config.headers['Authorization'] = `Bearer ${token}`;
+  }
 
   // Adiciona empresa e grupo aos headers se existirem
   if (user?.empresa) {

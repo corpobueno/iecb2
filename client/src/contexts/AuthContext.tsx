@@ -43,6 +43,11 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
 
       const userData = await response.json();
 
+      // Armazena o token para uso em requisições (fallback quando cookie não funciona)
+      if (userData.accessToken) {
+        sessionStorage.setItem('iecb_token', userData.accessToken);
+      }
+
       // Cria objeto de usuário compatível com ICorpoBuenoUser
       const adminUser: ICorpoBuenoUser = {
         login: userData.username,
@@ -109,12 +114,18 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
 
         if (!response.ok) {
           const errorData = await response.json().catch(() => ({}));
-          setError(errorData.errors?.default || 'Erro ao autenticar');
+          // Debug: mostra erro do backend
+          setError(`[DEBUG IFRAME] Status: ${response.status}, Erro: ${errorData.errors?.default || 'desconhecido'}, Referrer: "${referrer}"`);
           setIsLoading(false);
           return;
         }
 
         const userData = await response.json();
+
+        // Armazena o token para uso em requisições (fallback quando cookie não funciona)
+        if (userData.accessToken) {
+          sessionStorage.setItem('iecb_token', userData.accessToken);
+        }
 
         // Cria objeto de usuário compatível com ICorpoBuenoUser
         const authenticatedUser: ICorpoBuenoUser = {

@@ -6,13 +6,20 @@ import { AuthService } from '../services/AuthService';
 dotenv.config();
 
 export const ensureAuthenticated: RequestHandler = async (req, res, next) => {
-    const accessToken = req.cookies.accessToken; // Obtém o accessToken do cookie
-  
+    // Tenta obter o token do cookie primeiro, depois do header Authorization (fallback para cross-site)
+    let accessToken = req.cookies.accessToken;
 
-    // Verifica se o accessToken existe no cookie
+    if (!accessToken) {
+      const authHeader = req.headers.authorization;
+      if (authHeader && authHeader.startsWith('Bearer ')) {
+        accessToken = authHeader.substring(7);
+      }
+    }
+
+    // Verifica se o accessToken existe
     if (!accessToken) {
       return res.status(StatusCodes.UNAUTHORIZED).json({
-        errors: { default: 'Token não encontrado' }
+        errors: { default: 'Sessão expirada' }
       });
     }
   

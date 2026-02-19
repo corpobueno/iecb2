@@ -1,6 +1,6 @@
 import { lazy, Suspense } from 'react';
 import { Routes, Route } from 'react-router-dom';
-import { LeadsFranqueadoraPrincipal } from '../pages/leads/franqueadora';
+
 
 // Pages
 const NotFound = lazy(() => import('../pages/NotFound'));
@@ -39,6 +39,7 @@ const DiarioPage = lazy(() => import('../pages/diario/DiarioPage').then(m => ({ 
 
 //Leads
 const Leads = lazy(() => import('../pages/leads/principal/LeadsPrincipal'));
+const LeadsFranqueadora = lazy(() => import('../pages/leads/franqueadora/LeadsFranquadora'));
 
 export const AppRoutes = () => {
   return (
@@ -86,7 +87,7 @@ export const AppRoutes = () => {
 
         <Route path="/leads/principal" element={<Leads />} />
 
-        <Route path="/leads/franqueadora" element={<LeadsFranqueadoraPrincipal />} />
+        <Route path="/leads/franqueadora" element={<LeadsFranqueadora />} />
 
 
         {/* 404 */}

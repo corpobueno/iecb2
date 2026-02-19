@@ -10,7 +10,7 @@ import { PageContainer } from "../../../components/containers/PageContainer";
 import { SearchToolbar } from "../../../components/contents/SearchToolbar";
 import { ILeadsFranqueadora } from "../../../entities/Iecb";
 
-const LeadsFranqueadoraPrincipal: React.FC = () => {
+const LeadsFranqueadora: React.FC = () => {
 
     const initialFilters = {
         page: 1,
@@ -116,4 +116,4 @@ const LeadsFranqueadoraPrincipal: React.FC = () => {
     );
 };
 
-export default LeadsFranqueadoraPrincipal;
+export default LeadsFranqueadora;

@@ -43,7 +43,7 @@ const LeadsPrincipal: React.FC = () => {
     }
 
 
-    const mdDown = useMediaQuery((theme: Theme) => theme.breakpoints.down("md"));
+    const smDown = useMediaQuery((theme: Theme) => theme.breakpoints.down("sm"));
 
     return (
         <PageContainer
@@ -60,7 +60,7 @@ const LeadsPrincipal: React.FC = () => {
                 </SearchToolbar>
             }
         >
-            {mdDown ?
+            {smDown ?
                 (<>
                     <ToggleButtonStatus
                         statusLeads={statusLeads}
