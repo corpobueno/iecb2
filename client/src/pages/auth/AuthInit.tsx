@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useRef } from 'react';
 import { useSearchParams } from 'react-router-dom';
 import { Environment } from '../../api/axios-config/environment';
 
@@ -12,6 +12,7 @@ export const AuthInit = () => {
   const [searchParams] = useSearchParams();
   const [status, setStatus] = useState<AuthStatus>('loading');
   const [errorMessage, setErrorMessage] = useState<string>('');
+  const authAttemptedRef = useRef(false); // Evita dupla execução (React StrictMode)
 
   const token = searchParams.get('token');
 
@@ -30,8 +31,17 @@ export const AuthInit = () => {
   };
 
   useEffect(() => {
+    // Evita dupla execução (React StrictMode em desenvolvimento)
+    if (authAttemptedRef.current) {
+      console.log('[AuthInit] Autenticação já foi tentada, ignorando');
+      return;
+    }
+    authAttemptedRef.current = true;
+
     const initAuth = async () => {
-      console.log('[AuthInit] Iniciando autenticação, token:', token?.substring(0, 8) + '...');
+      console.log('[AuthInit] Iniciando autenticação');
+      console.log('[AuthInit] Token:', token?.substring(0, 8) + '...');
+      console.log('[AuthInit] Backend URL:', Environment.URL_BASE);
 
       if (!token) {
         setErrorMessage('Token não fornecido');
@@ -41,8 +51,11 @@ export const AuthInit = () => {
       }
 
       try {
+        const url = `${Environment.URL_BASE}/auth/validate-embed-token`;
+        console.log('[AuthInit] Chamando:', url);
+
         // Chama backend para validar token e setar cookie
-        const response = await fetch(`${Environment.URL_BASE}/auth/validate-embed-token`, {
+        const response = await fetch(url, {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json',
@@ -51,8 +64,11 @@ export const AuthInit = () => {
           body: JSON.stringify({ token }),
         });
 
+        console.log('[AuthInit] Response status:', response.status);
+
         if (!response.ok) {
           const errorData = await response.json().catch(() => ({}));
+          console.log('[AuthInit] Error data:', errorData);
           const msg = errorData.errors?.default || 'Token inválido ou expirado';
           setErrorMessage(msg);
           setStatus('error');
@@ -60,14 +76,26 @@ export const AuthInit = () => {
           return;
         }
 
-        // Sucesso!
-        console.log('[AuthInit] Autenticação bem-sucedida');
+        // IMPORTANTE: Enviar AUTH_SUCCESS IMEDIATAMENTE após status 200
+        // Isso garante que a mensagem seja enviada mesmo se o iframe for removido
+        // pelo cleanup() do Sistema A antes de conseguirmos ler o body
+        console.log('[AuthInit] Status 200 recebido, enviando AUTH_SUCCESS imediatamente');
         setStatus('success');
         sendMessageToParent('AUTH_SUCCESS');
 
+        // Tentar ler o body apenas para log (não é crítico)
+        try {
+          const data = await response.json();
+          console.log('[AuthInit] Response body:', data);
+        } catch (bodyError) {
+          // Ignorar erro ao ler body - o cookie já foi setado e AUTH_SUCCESS já foi enviado
+          console.log('[AuthInit] Não foi possível ler body (iframe pode ter sido removido), mas autenticação OK');
+        }
+
       } catch (error) {
         console.error('[AuthInit] Erro na autenticação:', error);
-        const msg = 'Erro de conexão com o servidor';
+        const errorMsg = error instanceof Error ? error.message : 'Erro desconhecido';
+        const msg = `Erro de conexão: ${errorMsg}`;
         setErrorMessage(msg);
         setStatus('error');
         sendMessageToParent('AUTH_ERROR', msg);

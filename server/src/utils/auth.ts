@@ -36,6 +36,21 @@ export const ensureAuthenticated: RequestHandler = async (req, res, next) => {
       });
     }
 
+    // Verifica se o login esperado (passado pelo frontend) bate com o do token
+    const expectedLogin = req.headers['x-expected-login'] as string | undefined;
+    if (expectedLogin && expectedLogin !== jwtData.username) {
+      console.log('[AUTH] Login mismatch:', {
+        expected: expectedLogin,
+        current: jwtData.username,
+      });
+      return res.status(StatusCodes.FORBIDDEN).json({
+        errors: { default: 'Usuário diferente do esperado' },
+        code: 'USER_MISMATCH',
+        expectedLogin,
+        currentLogin: jwtData.username,
+      });
+    }
+
     // Armazena as informações do usuário no objeto req.user
     req.user = {
       username: jwtData.username,
@@ -44,4 +59,3 @@ export const ensureAuthenticated: RequestHandler = async (req, res, next) => {
 
     return next();
   };
-  

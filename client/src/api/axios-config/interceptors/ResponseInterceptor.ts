@@ -2,20 +2,35 @@ import { AxiosResponse, AxiosError } from 'axios';
 
 interface ErrorResponse {
   message?: string;
-  errors?: Array<{ message: string }>;
+  errors?: { default?: string } | Array<{ message: string }>;
+  code?: string;
+  expectedLogin?: string;
+  currentLogin?: string;
 }
 
 export const responseInterceptor = (response: AxiosResponse) => {
-
-
   return response;
 };
 
 export const errorInterceptor = (error: AxiosError<ErrorResponse>) => {
-
-
   if (error.message === 'Network Error') {
     return Promise.reject(new Error('Erro de conexão.'));
+  }
+
+  // Trata erro de usuário diferente do esperado (403 com code USER_MISMATCH)
+  if (error.response?.status === 403 && error.response?.data?.code === 'USER_MISMATCH') {
+    console.log('[ResponseInterceptor] Usuário diferente do esperado:', {
+      expected: error.response.data.expectedLogin,
+      current: error.response.data.currentLogin,
+    });
+    // Dispara evento para solicitar re-autenticação
+    window.dispatchEvent(new CustomEvent('auth:user-mismatch', {
+      detail: {
+        expectedLogin: error.response.data.expectedLogin,
+        currentLogin: error.response.data.currentLogin,
+      }
+    }));
+    return Promise.reject(new Error('Usuário diferente do esperado. Re-autenticando...'));
   }
 
   if (error.response?.status === 401) {

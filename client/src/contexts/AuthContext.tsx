@@ -7,7 +7,9 @@ interface IAuthContextData {
   isAuthenticated: boolean;
   isLoading: boolean;
   error: string | null;
+  expectedLogin: string | null;
   loginWithAdminPassword: (password: string) => Promise<boolean>;
+  requestReAuth: () => void;
 }
 
 const AuthContext = createContext<IAuthContextData>({} as IAuthContextData);
@@ -20,6 +22,29 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
   const [user, setUser] = useState<ICorpoBuenoUser | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [expectedLogin, setExpectedLogin] = useState<string | null>(null);
+
+  /**
+   * Solicita re-autenticação ao Sistema A (parent)
+   */
+  const requestReAuth = () => {
+    console.log('[AuthContext] Solicitando re-autenticação ao parent');
+    // Limpa sessão atual
+    sessionStorage.removeItem('iecb_user');
+    sessionStorage.removeItem('iecb_token');
+    setUser(null);
+    setIsLoading(true);
+
+    // Envia mensagem ao parent solicitando nova autenticação
+    if (window.parent !== window) {
+      window.parent.postMessage({
+        type: 'AUTH_REQUIRED',
+        message: 'Sessão expirada ou usuário diferente',
+        expectedLogin: expectedLogin,
+        source: 'IECB_AUTH'
+      }, '*');
+    }
+  };
 
   /**
    * Login via senha de administrador (método reserva)
@@ -69,8 +94,64 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     }
   };
 
+  // Escuta evento de user mismatch para re-autenticar
+  useEffect(() => {
+    const handleUserMismatch = () => {
+      console.log('[AuthContext] Evento user-mismatch recebido, solicitando re-auth');
+      requestReAuth();
+    };
+
+    window.addEventListener('auth:user-mismatch', handleUserMismatch);
+    return () => {
+      window.removeEventListener('auth:user-mismatch', handleUserMismatch);
+    };
+  }, [expectedLogin]);
+
   useEffect(() => {
     const authenticateWithToken = async () => {
+      // Captura o login esperado da URL (passado pelo Sistema A)
+      const urlParams = new URLSearchParams(window.location.search);
+      const loginFromUrl = urlParams.get('login');
+
+      if (loginFromUrl) {
+        setExpectedLogin(loginFromUrl);
+        sessionStorage.setItem('iecb_expected_login', loginFromUrl);
+        console.log('[AuthContext] Login esperado da URL:', loginFromUrl);
+      } else {
+        // Tenta recuperar do sessionStorage
+        const storedExpectedLogin = sessionStorage.getItem('iecb_expected_login');
+        if (storedExpectedLogin) {
+          setExpectedLogin(storedExpectedLogin);
+        }
+      }
+
+      // Verifica se já tem usuário na sessionStorage
+      const storedUser = sessionStorage.getItem('iecb_user');
+      if (storedUser) {
+        try {
+          const parsedUser = JSON.parse(storedUser);
+
+          // Verifica se o usuário armazenado é o esperado
+          if (loginFromUrl && parsedUser.login !== loginFromUrl) {
+            console.log('[AuthContext] Usuário diferente do esperado:', {
+              stored: parsedUser.login,
+              expected: loginFromUrl
+            });
+            // Limpa sessão e solicita re-autenticação
+            sessionStorage.removeItem('iecb_user');
+            sessionStorage.removeItem('iecb_token');
+            requestReAuth();
+            return;
+          }
+
+          setUser(parsedUser);
+          setIsLoading(false);
+          return;
+        } catch {
+          sessionStorage.removeItem('iecb_user');
+        }
+      }
+
       // Verifica se está dentro de um iframe
       const isInIframe = window.self !== window.top;
 
@@ -79,8 +160,8 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
         'app.corpobueno.com.br',
         'app.institutocorpobueno.com.br',
         'web.sysnode.com.br',
-        'localhost:5173', // Para desenvolvimento
-        'localhost:5174', // Para desenvolvimento
+        'localhost:5173',
+        'localhost:5174',
       ];
 
       // Verifica se o referrer é de um domínio autorizado
@@ -89,18 +170,15 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
         referrer.includes(domain)
       );
 
-      // Se não está em iframe de domínio autorizado, exige autenticação
+      // Se não está em iframe de domínio autorizado, exige autenticação manual
       if (!isInIframe || !isFromAllowedDomain) {
-        // Temporário: mostra debug em produção para diagnosticar
         setError(`[DEBUG] isInIframe: ${isInIframe}, referrer: "${referrer || '(vazio)'}", isAllowed: ${isFromAllowedDomain}`);
         setIsLoading(false);
         return;
       }
 
       try {
-        // Captura o login da URL (passado pelo Corpo Bueno)
-        const urlParams = new URLSearchParams(window.location.search);
-        const login = urlParams.get('login') || 'iframe-user';
+        const login = loginFromUrl || 'iframe-user';
 
         // Autentica automaticamente via iframe autorizado
         const response = await fetch(`${Environment.URL_BASE}/auth/iframe`, {
@@ -114,7 +192,6 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
 
         if (!response.ok) {
           const errorData = await response.json().catch(() => ({}));
-          // Debug: mostra erro do backend
           setError(`[DEBUG IFRAME] Status: ${response.status}, Erro: ${errorData.errors?.default || 'desconhecido'}, Referrer: "${referrer}"`);
           setIsLoading(false);
           return;
@@ -122,12 +199,12 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
 
         const userData = await response.json();
 
-        // Armazena o token para uso em requisições (fallback quando cookie não funciona)
+        // Armazena o token
         if (userData.accessToken) {
           sessionStorage.setItem('iecb_token', userData.accessToken);
         }
 
-        // Cria objeto de usuário compatível com ICorpoBuenoUser
+        // Cria objeto de usuário
         const authenticatedUser: ICorpoBuenoUser = {
           login: userData.username,
           nome: userData.name || userData.username,
@@ -137,12 +214,8 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
           grupo: userData.groupId,
         };
 
-        // Armazena dados do usuário
         setUser(authenticatedUser);
-
-        // Armazena na sessionStorage para persistir durante a sessão do iframe
         sessionStorage.setItem('iecb_user', JSON.stringify(authenticatedUser));
-
         setError(null);
         setIsLoading(false);
       } catch (err) {
@@ -151,25 +224,21 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
       }
     };
 
-    // Verifica se já tem usuário na sessionStorage (para navegação interna)
-    const storedUser = sessionStorage.getItem('iecb_user');
-    if (storedUser) {
-      try {
-        setUser(JSON.parse(storedUser));
-        setIsLoading(false);
-        return;
-      } catch {
-        sessionStorage.removeItem('iecb_user');
-      }
-    }
-
     authenticateWithToken();
   }, []);
 
   const isAuthenticated = !!user;
 
   return (
-    <AuthContext.Provider value={{ user, isAuthenticated, isLoading, error, loginWithAdminPassword }}>
+    <AuthContext.Provider value={{
+      user,
+      isAuthenticated,
+      isLoading,
+      error,
+      expectedLogin,
+      loginWithAdminPassword,
+      requestReAuth
+    }}>
       {children}
     </AuthContext.Provider>
   );
