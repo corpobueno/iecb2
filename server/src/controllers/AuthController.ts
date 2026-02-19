@@ -30,11 +30,12 @@ export class AuthController {
       }
 
       // Define o cookie httpOnly com o token JWT local
+      const isProduction = process.env.NODE_ENV === 'production';
       res.cookie('accessToken', result.accessToken, {
         httpOnly: true,
-        secure: process.env.NODE_ENV === 'production',
+        secure: isProduction,
         maxAge: this.getMsUntilMidnight(),
-        sameSite: 'lax', // Permite uso em iframe
+        sameSite: isProduction ? 'none' : 'lax', // 'none' para cross-site em produção
       });
 
       return res.status(StatusCodes.OK).json(result);
@@ -55,6 +56,7 @@ export class AuthController {
       const allowedDomains = [
         'app.corpobueno.com.br',
         'app.institutocorpobueno.com.br',
+        'web.sysnode.com.br',
         'localhost:5173', // Para desenvolvimento
         'localhost:5174', // Para desenvolvimento
       ];
@@ -79,11 +81,12 @@ export class AuthController {
       }
 
       // Define o cookie httpOnly com o token JWT local
+      const isProduction = process.env.NODE_ENV === 'production';
       res.cookie('accessToken', result.accessToken, {
         httpOnly: true,
-        secure: process.env.NODE_ENV === 'production',
+        secure: isProduction,
         maxAge: this.getMsUntilMidnight(),
-        sameSite: 'lax', // Permite uso em iframe
+        sameSite: isProduction ? 'none' : 'lax', // 'none' para cross-site em produção
       });
 
       return res.status(StatusCodes.OK).json(result);
@@ -115,11 +118,12 @@ export class AuthController {
       }
 
       // Define o cookie httpOnly com o token JWT local
+      const isProduction = process.env.NODE_ENV === 'production';
       res.cookie('accessToken', result.accessToken, {
         httpOnly: true,
-        secure: process.env.NODE_ENV === 'production',
+        secure: isProduction,
         maxAge: this.getMsUntilMidnight(),
-        sameSite: 'lax',
+        sameSite: isProduction ? 'none' : 'lax', // 'none' para cross-site em produção
       });
 
       return res.status(StatusCodes.OK).json(result);
@@ -130,10 +134,11 @@ export class AuthController {
 
   async logout(_: Request, res: Response) {
     try {
+      const isProduction = process.env.NODE_ENV === 'production';
       res.clearCookie('accessToken', {
         httpOnly: true,
-        secure: process.env.NODE_ENV === 'production',
-        sameSite: 'lax',
+        secure: isProduction,
+        sameSite: isProduction ? 'none' : 'lax',
       });
 
       return res.status(StatusCodes.OK).json({
