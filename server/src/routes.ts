@@ -28,12 +28,29 @@ export default (
 ) => {
   const router = express.Router();
 
+  // Log de inicialização das rotas de embed
+  console.log('[EMBED-AUTH] Rotas de autenticação embed registradas:');
+  console.log('[EMBED-AUTH]   POST /auth/register-embed-token');
+  console.log('[EMBED-AUTH]   GET /auth/init');
+
+  // Endpoint de teste para verificar se o servidor está acessível
+  router.get('/auth/embed-test', (req, res) => {
+    console.log('[EMBED-AUTH] Teste de conectividade recebido');
+    res.json({
+      success: true,
+      message: 'Endpoint de embed auth está funcionando',
+      frameTokenConfigured: !!process.env.FRAME_TOKEN,
+      timestamp: new Date().toISOString(),
+    });
+  });
+
   // =====================================================
   // AUTH ROUTES
   // =====================================================
   // Embed auth (server-to-server + navegador)
   router.post('/auth/register-embed-token', (req, res) => authController.registerEmbedToken(req, res));
   router.get('/auth/init', (req, res) => authController.authInit(req, res));
+  router.post('/auth/validate-embed-token', (req, res) => authController.validateEmbedToken(req, res));
   // Outros métodos de auth
   router.post('/auth/iframe', (req, res) => authController.authIframe(req, res));
   router.post('/auth/frame-token', (req, res) => authController.authFrameToken(req, res));

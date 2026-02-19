@@ -4,6 +4,7 @@ import { Routes, Route } from 'react-router-dom';
 
 // Pages
 const NotFound = lazy(() => import('../pages/NotFound'));
+const AuthInit = lazy(() => import('../pages/auth/AuthInit'));
 
 // Acompanhamento
 const AcompanhamentoList = lazy(() => import('../pages/acompanhamento/AcompanhamentoList'));
@@ -45,6 +46,9 @@ export const AppRoutes = () => {
   return (
     <Suspense fallback={<div>Carregando...</div>}>
       <Routes>
+        {/* Auth - Embed authentication */}
+        <Route path="/auth/init" element={<AuthInit />} />
+
         {/* Acompanhamento (Leads/Clientes) */}
         <Route path="/" element={<AcompanhamentoList />} />
         <Route path="/acompanhamento" element={<AcompanhamentoList />} />

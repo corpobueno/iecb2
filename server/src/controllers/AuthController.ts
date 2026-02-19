@@ -1,6 +1,7 @@
 // src/controllers/AuthController.ts
 import { Request, Response } from 'express';
 import { AuthUseCases } from '../usecases/AuthUseCases';
+import { AuthService } from '../services/AuthService';
 import { StatusCodes } from 'http-status-codes';
 import { handleError } from '../utils/handleError';
 
@@ -211,11 +212,25 @@ export class AuthController {
 
       if (!tokenData) {
         console.log('[EMBED-AUTH] ERRO: token não encontrado ou expirado:', token.substring(0, 8) + '...');
+
+        // Verifica se já existe um cookie válido (usuário pode ter voltado a página)
+        const existingToken = req.cookies.accessToken;
+        if (existingToken) {
+          const jwtData = AuthService.decodeToken(existingToken);
+          if (jwtData !== 'JWT_SECRET_NOT_FOUND' && jwtData !== 'INVALID_TOKEN') {
+            console.log('[EMBED-AUTH] Cookie válido encontrado, redirecionando para o app');
+            // Redireciona para o frontend do IECB
+            const frontendUrl = process.env.IECB_FRONTEND_URL || 'http://localhost:3000';
+            return res.redirect(frontendUrl);
+          }
+        }
+
         return res.status(StatusCodes.UNAUTHORIZED).send(`
           <html>
             <body>
               <h1>Erro de Autenticação</h1>
               <p>Token expirado ou inválido. Por favor, tente novamente.</p>
+              <p><a href="/">Ir para a página inicial</a></p>
             </body>
           </html>
         `);
@@ -258,6 +273,74 @@ export class AuthController {
       return res.redirect(tokenData.redirectUrl);
     } catch (error) {
       console.error('[EMBED-AUTH] ERRO em authInit:', error);
+      handleError(error, res);
+    }
+  }
+
+  /**
+   * Valida token de embed via API (para uso com iframe oculto)
+   * Chamado pelo frontend do IECB quando carregado em iframe
+   */
+  async validateEmbedToken(req: Request, res: Response) {
+    try {
+      const { token } = req.body;
+
+      console.log('[EMBED-AUTH] validateEmbedToken chamado:', {
+        token: typeof token === 'string' ? token.substring(0, 8) + '...' : token,
+      });
+
+      if (!token || typeof token !== 'string') {
+        console.log('[EMBED-AUTH] ERRO: token não fornecido');
+        return res.status(StatusCodes.BAD_REQUEST).json({
+          errors: { default: 'Token não fornecido' }
+        });
+      }
+
+      // Valida e consome o token efêmero
+      const tokenData = this.authCases.validateAndConsumeEmbedToken(token);
+
+      if (!tokenData) {
+        console.log('[EMBED-AUTH] ERRO: token não encontrado ou expirado');
+        return res.status(StatusCodes.UNAUTHORIZED).json({
+          errors: { default: 'Token expirado ou inválido' }
+        });
+      }
+
+      console.log('[EMBED-AUTH] Token validado:', {
+        login: tokenData.login,
+        empresa: tokenData.empresa,
+        grupo: tokenData.grupo,
+      });
+
+      // Cria a sessão do usuário
+      const session = await this.authCases.createEmbedSession(
+        tokenData.login,
+        tokenData.empresa,
+        tokenData.unidade,
+        tokenData.grupo
+      );
+
+      console.log('[EMBED-AUTH] Sessão criada:', { username: session.username });
+
+      // Define o cookie httpOnly
+      const isProduction = process.env.NODE_ENV === 'production';
+      res.cookie('accessToken', session.accessToken, {
+        httpOnly: true,
+        secure: isProduction,
+        maxAge: this.getMsUntilMidnight(),
+        sameSite: isProduction ? 'none' : 'lax',
+      });
+
+      console.log('[EMBED-AUTH] Cookie setado via API');
+
+      return res.status(StatusCodes.OK).json({
+        success: true,
+        username: session.username,
+        groupId: session.groupId,
+        companyId: session.companyId,
+      });
+    } catch (error) {
+      console.error('[EMBED-AUTH] ERRO em validateEmbedToken:', error);
       handleError(error, res);
     }
   }

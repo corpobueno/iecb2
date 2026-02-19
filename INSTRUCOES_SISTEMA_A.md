@@ -229,6 +229,10 @@ export const OpenIECBButton = () => {
 - Frontend IECB: `https://app.institutocorpobueno.com.br`
 - FRAME_TOKEN: `9y8R6m1KZpYwFQ3WnB2tXJ4dC0uE5sLhA7qVfN8rTgM`
 
+**Nota:** A URL de redirecionamento pode ser tanto para o frontend quanto para o backend:
+- Frontend: `https://app.institutocorpobueno.com.br/auth/init?token=xxx` (redireciona internamente para o backend)
+- Backend (direto): `https://backend.institutocorpobueno.com.br/auth/init?token=xxx`
+
 ## Testando
 
 1. Implemente os endpoints no Sistema A
