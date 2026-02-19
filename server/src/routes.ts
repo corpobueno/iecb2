@@ -31,6 +31,10 @@ export default (
   // =====================================================
   // AUTH ROUTES
   // =====================================================
+  // Embed auth (server-to-server + navegador)
+  router.post('/auth/register-embed-token', (req, res) => authController.registerEmbedToken(req, res));
+  router.get('/auth/init', (req, res) => authController.authInit(req, res));
+  // Outros métodos de auth
   router.post('/auth/iframe', (req, res) => authController.authIframe(req, res));
   router.post('/auth/frame-token', (req, res) => authController.authFrameToken(req, res));
   router.post('/auth/admin', (req, res) => authController.authAdminPassword(req, res));

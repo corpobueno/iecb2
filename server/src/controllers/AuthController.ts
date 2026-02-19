@@ -132,6 +132,136 @@ export class AuthController {
     }
   }
 
+  /**
+   * Registra um token efêmero para autenticação via embed (server-to-server)
+   * Chamado pelo Backend do Sistema A (Corpo Bueno)
+   */
+  async registerEmbedToken(req: Request, res: Response) {
+    try {
+      const { embedToken, login, redirectUrl, frameToken, empresa, unidade, grupo } = req.body;
+
+      console.log('[EMBED-AUTH] registerEmbedToken chamado:', {
+        embedToken: embedToken?.substring(0, 8) + '...',
+        login,
+        redirectUrl,
+        empresa,
+        unidade,
+        grupo,
+        hasFrameToken: !!frameToken,
+      });
+
+      // Valida o FRAME_TOKEN compartilhado (autenticação server-to-server)
+      const expectedFrameToken = process.env.FRAME_TOKEN;
+      if (!expectedFrameToken || frameToken !== expectedFrameToken) {
+        console.log('[EMBED-AUTH] ERRO: frameToken inválido ou não configurado');
+        return res.status(StatusCodes.UNAUTHORIZED).json({
+          errors: { default: 'Token de autenticação inválido' }
+        });
+      }
+
+      if (!embedToken || !login || !redirectUrl) {
+        console.log('[EMBED-AUTH] ERRO: parâmetros faltando');
+        return res.status(StatusCodes.BAD_REQUEST).json({
+          errors: { default: 'Parâmetros obrigatórios: embedToken, login, redirectUrl' }
+        });
+      }
+
+      // Registra o token efêmero no cache com dados adicionais
+      this.authCases.registerEmbedToken(embedToken, login, redirectUrl, empresa, unidade, grupo);
+
+      console.log('[EMBED-AUTH] Token registrado com sucesso para:', login);
+
+      return res.status(StatusCodes.OK).json({
+        success: true,
+        message: 'Token registrado com sucesso'
+      });
+    } catch (error) {
+      console.error('[EMBED-AUTH] ERRO em registerEmbedToken:', error);
+      handleError(error, res);
+    }
+  }
+
+  /**
+   * Inicializa a sessão do usuário via embed token
+   * Navegador acessa diretamente, valida token, seta cookie e redireciona
+   */
+  async authInit(req: Request, res: Response) {
+    try {
+      const { token } = req.query;
+
+      console.log('[EMBED-AUTH] authInit chamado:', {
+        token: typeof token === 'string' ? token.substring(0, 8) + '...' : token,
+        userAgent: req.headers['user-agent']?.substring(0, 50),
+      });
+
+      if (!token || typeof token !== 'string') {
+        console.log('[EMBED-AUTH] ERRO: token não fornecido ou tipo inválido');
+        return res.status(StatusCodes.BAD_REQUEST).send(`
+          <html>
+            <body>
+              <h1>Erro de Autenticação</h1>
+              <p>Token não fornecido ou inválido.</p>
+            </body>
+          </html>
+        `);
+      }
+
+      // Valida e consome o token efêmero
+      const tokenData = this.authCases.validateAndConsumeEmbedToken(token);
+
+      if (!tokenData) {
+        console.log('[EMBED-AUTH] ERRO: token não encontrado ou expirado:', token.substring(0, 8) + '...');
+        return res.status(StatusCodes.UNAUTHORIZED).send(`
+          <html>
+            <body>
+              <h1>Erro de Autenticação</h1>
+              <p>Token expirado ou inválido. Por favor, tente novamente.</p>
+            </body>
+          </html>
+        `);
+      }
+
+      console.log('[EMBED-AUTH] Token validado com sucesso:', {
+        login: tokenData.login,
+        empresa: tokenData.empresa,
+        unidade: tokenData.unidade,
+        grupo: tokenData.grupo,
+        redirectUrl: tokenData.redirectUrl,
+      });
+
+      // Cria a sessão do usuário com os dados de empresa/grupo
+      const session = await this.authCases.createEmbedSession(
+        tokenData.login,
+        tokenData.empresa,
+        tokenData.unidade,
+        tokenData.grupo
+      );
+
+      console.log('[EMBED-AUTH] Sessão criada:', {
+        username: session.username,
+        companyId: session.companyId,
+        groupId: session.groupId,
+      });
+
+      // Define o cookie httpOnly (isso é first-party, não cross-site!)
+      const isProduction = process.env.NODE_ENV === 'production';
+      res.cookie('accessToken', session.accessToken, {
+        httpOnly: true,
+        secure: isProduction,
+        maxAge: this.getMsUntilMidnight(),
+        sameSite: 'lax', // Pode ser 'lax' pois é first-party
+      });
+
+      console.log('[EMBED-AUTH] Cookie setado, redirecionando para:', tokenData.redirectUrl);
+
+      // Redireciona de volta para o Sistema A
+      return res.redirect(tokenData.redirectUrl);
+    } catch (error) {
+      console.error('[EMBED-AUTH] ERRO em authInit:', error);
+      handleError(error, res);
+    }
+  }
+
   async logout(_: Request, res: Response) {
     try {
       const isProduction = process.env.NODE_ENV === 'production';

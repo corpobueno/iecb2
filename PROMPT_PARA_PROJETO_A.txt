@@ -1,0 +1,40 @@
+Preciso implementar autenticação segura para abrir o sistema IECB (Sistema B) dentro de um iframe no meu sistema (Sistema A - Corpo Bueno).
+
+O Sistema B (IECB) já tem os endpoints prontos:
+
+1. POST https://backend.institutocorpobueno.com.br/auth/register-embed-token
+   Body: { embedToken, login, redirectUrl, frameToken }
+   - Registra token efêmero (TTL 60s, uso único)
+
+2. GET https://app.institutocorpobueno.com.br/auth/init?token=xxx
+   - Valida token, seta cookie no navegador, redireciona para redirectUrl
+
+O fluxo é:
+1. Usuário clica para abrir IECB
+2. Meu backend gera UUID e chama o endpoint 1 do Sistema B (server-to-server)
+3. Meu frontend redireciona navegador para endpoint 2 do Sistema B
+4. Sistema B seta cookie e redireciona de volta
+5. Meu frontend renderiza iframe do IECB (cookie já existe!)
+
+Preciso criar:
+1. Endpoint no meu backend: POST /iecb/prepare-session
+   - Obtém usuário logado
+   - Gera embedToken (UUID)
+   - Chama Sistema B para registrar
+   - Retorna URL de redirect
+
+2. Página de callback: /iecb/callback
+   - Renderiza o iframe do IECB
+
+3. Botão/componente para abrir IECB
+   - Chama meu backend
+   - Redireciona para URL retornada
+
+Variáveis de ambiente necessárias:
+FRAME_TOKEN=9y8R6m1KZpYwFQ3WnB2tXJ4dC0uE5sLhA7qVfN8rTgM
+IECB_BACKEND_URL=https://backend.institutocorpobueno.com.br
+IECB_FRONTEND_URL=https://app.institutocorpobueno.com.br
+
+A estrutura do meu projeto é similar ao IECB (Express + React).
+
+Implemente isso no meu projeto.

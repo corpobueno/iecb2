@@ -6,16 +6,7 @@ import { AuthService } from '../services/AuthService';
 dotenv.config();
 
 export const ensureAuthenticated: RequestHandler = async (req, res, next) => {
-    // TEMPORÁRIO: Bypass de autenticação para produção
-    // TODO: Remover após resolver problema de autenticação cross-site
-    req.user = {
-      username: 'iframe-user',
-      groupId: 1,
-    };
-    return next();
-
-    /*
-    // Tenta obter o token do cookie primeiro, depois do header Authorization (fallback para cross-site)
+    // Tenta obter o token do cookie primeiro, depois do header Authorization (fallback)
     let accessToken = req.cookies.accessToken;
 
     if (!accessToken) {
@@ -35,7 +26,6 @@ export const ensureAuthenticated: RequestHandler = async (req, res, next) => {
     // Verifica o token usando jwtVerify
     const jwtData = AuthService.decodeToken(accessToken);
 
-
     if (jwtData === 'JWT_SECRET_NOT_FOUND') {
       return res.status(StatusCodes.INTERNAL_SERVER_ERROR).json({
         errors: { default: 'Erro ao verificar o token' }
@@ -53,6 +43,5 @@ export const ensureAuthenticated: RequestHandler = async (req, res, next) => {
     };
 
     return next();
-    */
   };
   
