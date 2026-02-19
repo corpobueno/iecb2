@@ -36,7 +36,6 @@ export interface IPagamentoProcessar {
     valor: number;
     qnt: number;
   }>;
-  valorPendente: number;
 }
 
 // ========================================

@@ -71,7 +71,7 @@ export const PaymentDialog = ({ open, onClose, aluno, agenda, onPaymentComplete 
   // Créditos disponíveis
   const [creditos, setCreditos] = useState(0);
 
-  const valorPendente = (alunoValor || 0) + (alunoValorMatricula || 0) - totalPago;
+  const valorPendente = (Number(alunoValor) || 0) + (Number(alunoValorMatricula) || 0) - totalPago;
 
   const loadData = useCallback(async () => {
     if (!aluno) return;
@@ -82,7 +82,7 @@ export const PaymentDialog = ({ open, onClose, aluno, agenda, onPaymentComplete 
       // Filtrar apenas os pagamentos deste aluno específico
       const alunoPayments = pagResult.data.filter(p => p.idAluno === aluno.id);
       setPagamentosSalvos(alunoPayments);
-      const total = alunoPayments.reduce((acc, p) => acc + (p.valor || 0), 0);
+      const total = alunoPayments.reduce((acc, p) => acc + (Number(p.valor) || 0), 0);
       setTotalPago(total);
     }
 
@@ -118,8 +118,8 @@ export const PaymentDialog = ({ open, onClose, aluno, agenda, onPaymentComplete 
 
   useEffect(() => {
     if (open && aluno) {
-      setAlunoValor(aluno.valor || 0);
-      setAlunoValorMatricula(aluno.valorMatricula || 0);
+      setAlunoValor(Number(aluno.valor) || 0);
+      setAlunoValorMatricula(Number(aluno.valorMatricula) || 0);
       setFormaPagamento(1);
       setParcelas(1);
       setEditingPagamento(null);
@@ -172,7 +172,6 @@ export const PaymentDialog = ({ open, onClose, aluno, agenda, onPaymentComplete 
           valor: valorPagamento,
           qnt: parcelas,
         }],
-        valorPendente: valorPendente,
       });
 
       if (result instanceof Error) {
@@ -350,7 +349,7 @@ export const PaymentDialog = ({ open, onClose, aluno, agenda, onPaymentComplete 
         <Box sx={{ display: 'flex', gap: 3, mb: 3, p: 2, bgcolor: 'grey.100', borderRadius: 1 }}>
           <Box>
             <Typography variant="caption" color="text.secondary">Total</Typography>
-            <Typography fontWeight={600}>{toCash(alunoValor + alunoValorMatricula)}</Typography>
+            <Typography fontWeight={600}>{toCash((alunoValor) + alunoValorMatricula)}</Typography>
           </Box>
           <Box>
             <Typography variant="caption" color="text.secondary">Pago</Typography>

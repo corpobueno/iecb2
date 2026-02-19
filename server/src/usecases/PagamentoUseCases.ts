@@ -63,7 +63,7 @@ export class PagamentoUseCases {
    * Cria registros de pagamento e atualiza créditos se necessário
    */
   async processarPagamentoAluno(dados: IPagamentoProcessar): Promise<number[]> {
-    const { idCliente, idAula, idAluno, docente, caixa, pagamentos, valorPendente } = dados;
+    const { idCliente, idAula, idAluno, docente, caixa, pagamentos } = dados;
 
     const trx = await db.transaction();
     const ids: number[] = [];
@@ -135,16 +135,6 @@ export class PagamentoUseCases {
           });
           ids.push(id);
         }
-      }
-
-      // Se há valor pendente, cria crédito para o cliente
-      if (valorPendente > 0) {
-        await trx('pagamento_iecb').insert({
-          idCliente,
-          caixa,
-          valor: valorPendente,
-          idPagamento: 0, // Crédito
-        });
       }
 
       await trx.commit();
