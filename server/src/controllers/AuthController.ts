@@ -76,7 +76,8 @@ export class AuthController {
 
       if (result.accessToken) {
         console.log('[AuthController] Sessão validada e token atualizado para usuário:', result.username);
-
+        
+        res.clearCookie('accessToken');
         res.cookie('accessToken', result.accessToken, {
           httpOnly: true,
           secure: process.env.NODE_ENV === 'production',
