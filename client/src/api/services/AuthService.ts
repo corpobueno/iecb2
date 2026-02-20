@@ -1,12 +1,7 @@
+import { IAuthResult, IValidateRequest } from '../../entities/Auth';
 import { Api } from '../axios-config';
 
-interface IAuthResult {
-  username: string;
-  accessToken: string;
-  groupId: number;
-  companyId: number;
-  name: string;
-}
+
 
 export const AuthService = {
   /**
@@ -44,9 +39,9 @@ export const AuthService = {
   /**
    * Valida a sessão atual
    */
-  validate: async (): Promise<IAuthResult | Error> => {
+  validate: async (postUser: IValidateRequest): Promise<IAuthResult | Error> => {
     try {
-      const { data } = await Api.post('/auth/validate');
+      const { data } = await Api.post('/auth/validate', postUser);
       return data;
     } catch (error) {
       console.error(error);

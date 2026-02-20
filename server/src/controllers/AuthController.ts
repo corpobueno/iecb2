@@ -41,6 +41,60 @@ export class AuthController {
     }
   }
 
+  async validate(req: Request, res: Response) {
+
+    function verificarCamposExistem(body: any, user: any): boolean {
+      // Verifica se os objetos existem
+      if (!body || !user) return false;
+
+      // Verifica se todos os campos do body existem
+      const bodyCamposExistem = 'usuario' in body && 'empresa' in body && 'grupo' in body;
+
+      // Verifica se todos os campos do user existem
+      const userCamposExistem = 'username' in user && 'companyId' in user && 'groupId' in user;
+
+      // Verifica se os valores não são undefined
+      const bodyValoresExistem = body.usuario !== undefined &&
+        body.empresa !== undefined &&
+        body.grupo !== undefined;
+
+      const userValoresExistem = user.username !== undefined &&
+        user.companyId !== undefined &&
+        user.groupId !== undefined;
+
+      return bodyCamposExistem && userCamposExistem && bodyValoresExistem && userValoresExistem;
+    }
+    try {
+      const { user, body } = req;
+
+      if (!verificarCamposExistem(body, user)) {
+        console.error('[AuthController] Campos necessários ausentes ou undefined. Body:', body, 'User:', user);
+        throw new Error('Dados de autenticação incompletos ou inválidos');
+      }
+
+      const result = await this.authCases.validate(user, body);
+
+      if (result.accessToken) {
+        console.log('[AuthController] Sessão validada e token atualizado para usuário:', result.username);
+
+        res.cookie('accessToken', result.accessToken, {
+          httpOnly: true,
+          secure: process.env.NODE_ENV === 'production',
+          sameSite: 'lax',
+          maxAge: 24 * 60 * 60 * 1000, // 24 horas
+        });
+      }
+
+      return res.status(StatusCodes.OK).json({
+        username: result.username,
+        groupId: result.groupId,
+        companyId: result.companyId,
+      });
+    } catch (error) {
+      handleError(error, res);
+    }
+  }
+
   /**
    * Autentica via senha de administrador
    */
@@ -83,21 +137,6 @@ export class AuthController {
     }
   }
 
-  async validate(req: Request, res: Response) {
-    try {
-      if (!req.user?.username) {
-        return res.status(StatusCodes.UNAUTHORIZED).json({
-          errors: { default: 'Usuário não autenticado' }
-        });
-      }
 
-      return res.status(StatusCodes.OK).json({
-        username: req.user.username,
-        groupId: req.user.groupId,
-        companyId: req.user.companyId,
-      });
-    } catch (error) {
-      handleError(error, res);
-    }
-  }
 }
+

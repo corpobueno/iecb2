@@ -1,6 +1,8 @@
 import { createContext, useContext, useEffect, useState, ReactNode, useRef } from 'react';
 import { Environment } from '../api/axios-config/environment';
 import { AuthService } from '../api/services/AuthService';
+import { setSessionStorage } from '../utils/functions';
+import { IValidateRequest } from '../entities/Auth';
 
 interface IUser {
   login: string;
@@ -71,16 +73,13 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
 
 
   type ValidateResult =
-    | { status: 'authenticated'; username: string; groupId: number }
-    | { status: 'different_user'; currentUsername: string }
+    | { status: 'authenticated';}
     | { status: 'not_authenticated' }
     | { status: 'error'; message: string };
 
-  const validate = async (usuario: string): Promise<ValidateResult> => {
+  const validate = async (postUser: IValidateRequest): Promise<ValidateResult> => {
     try {
-      const response = await AuthService.validate();
-
-      console.log('[Auth] Resultado da validação:', response, 'usuario recebido:', usuario);
+      const response = await AuthService.validate(postUser);
 
       if (response instanceof Error) {
         // Verifica se é erro 401 (não autenticado) - inclui mensagem do interceptor
@@ -96,18 +95,17 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
         }
         return { status: 'error', message: errorMessage };
       }
-
-      // Usuário autenticado - verifica se é o mesmo
-      if (usuario === response.username) {
-        console.log('[Auth] Mesmo usuário já autenticado:', usuario);
-        sessionStorage.setItem('username', JSON.stringify(response.username));
-        sessionStorage.setItem('groupId', JSON.stringify(response.groupId));
-        return { status: 'authenticated', username: response.username, groupId: response.groupId };
-      }
-
-      // Usuário diferente - precisa reautenticar
-      console.log('[Auth] Usuário diferente detectado. Atual:', response.username, 'Recebido:', usuario);
-      return { status: 'different_user', currentUsername: response.username };
+        setSessionStorage('username', response.username);
+        setSessionStorage('groupId', response.groupId);
+        setSessionStorage('companyId', response.companyId);
+        setUser({
+          login: response.username,
+          nome: response.name,
+          empresa: response.companyId,
+          grupo: response.groupId,
+        });
+        return { status: 'authenticated' };
+      
     } catch (err) {
       console.error('[Auth] Erro ao validar:', err);
       return { status: 'error', message: 'Erro ao validar sessão' };
@@ -244,7 +242,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
       // 3. Se autenticado mas usuário diferente → reautenticar com novo usuário
       // 4. Se não autenticado (401) → autenticar (backend valida o frameToken)
 
-      const validationResult = await validate(usuario);
+      const validationResult = await validate({ usuario, empresa, grupo });
 
       switch (validationResult.status) {
         case 'authenticated':
@@ -252,35 +250,11 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
           console.log('[Auth] Sessão válida para o mesmo usuário, reutilizando');
           authCompletedRef.current = true;
 
-          // Atualiza o estado local com os dados do usuário
-          const authenticatedUser: IUser = {
-            login: usuario,
-            nome: usuario,
-            empresa: empresa,
-            grupo: validationResult.groupId,
-          };
-          setUser(authenticatedUser);
-          sessionStorage.setItem('iecb_user', JSON.stringify(authenticatedUser));
           setIsLoading(false);
 
           if (window.parent !== window) {
             window.parent.postMessage({ type: 'AUTH_SUCCESS', source: 'IECB' }, '*');
           }
-          break;
-
-        case 'different_user':
-          // Usuário diferente no backend - refazer autenticação com novo username e groupId
-          console.log('[Auth] Usuário diferente detectado. Backend:', validationResult.currentUsername, '| Recebido:', usuario);
-          console.log('[Auth] Reautenticando com novo usuário...');
-
-          // Limpa sessão anterior
-          sessionStorage.removeItem('iecb_user');
-          sessionStorage.removeItem('iecb_token');
-          sessionStorage.removeItem('username');
-          sessionStorage.removeItem('groupId');
-
-          // Autentica com o novo usuário (backend vai criar nova sessão com req.user atualizado)
-          authenticateViaPostMessage(frameToken, usuario, empresa, grupo);
           break;
 
         case 'not_authenticated':

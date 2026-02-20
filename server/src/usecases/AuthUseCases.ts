@@ -11,6 +11,10 @@ interface IAuthResult {
   name: string;
 }
 
+interface IValidateResult  extends Omit<IAuthResult, 'accessToken'>  {
+  accessToken: string | null;
+}
+
 export class AuthUseCases {
   constructor() { }
 
@@ -30,16 +34,15 @@ export class AuthUseCases {
       throw new AppError('Token de frame inválido', StatusCodes.UNAUTHORIZED);
     }
 
-    if (!usuario) {
-      throw new AppError('Usuário não informado', StatusCodes.BAD_REQUEST);
+    if (!usuario || !empresa || !grupo) {
+      throw new AppError('Dados de autenticação incompletos: usuario=' + usuario + ', empresa=' + empresa + ', grupo=' + grupo, StatusCodes.BAD_REQUEST);
     }
 
     // Gera JWT local
     const accessToken = AuthService.generateToken(
       usuario,
-      empresa || 1,
-      0, // lite
-      grupo || 1
+      empresa,
+      grupo
     );
 
     if (accessToken === 'JWT_SECRET_NOT_FOUND') {
@@ -49,10 +52,49 @@ export class AuthUseCases {
     return {
       username: usuario,
       accessToken,
-      groupId: grupo || 1,
-      companyId: empresa || 1,
+      groupId: grupo,
+      companyId: empresa,
       name: usuario,
     };
+  }
+
+  async validate(user: any, body: any): Promise<IValidateResult> {
+
+    const sameValues = AuthService.compareValues(body, user);
+    const { usuario, empresa, grupo } = body;
+
+    if (sameValues) {
+
+      return {
+        username: usuario,
+        accessToken: null,
+        groupId: grupo,
+        companyId: empresa,
+        name: usuario,
+      };
+
+    }
+
+    console.log('[AuthUseCases] Valores não correspondem. Body:', body, 'User:', user);
+
+    const accessToken = AuthService.generateToken(
+      usuario,
+      empresa,
+      grupo
+    );
+
+    if (accessToken === 'JWT_SECRET_NOT_FOUND') {
+      throw new AppError('Erro ao gerar token de acesso', StatusCodes.INTERNAL_SERVER_ERROR);
+    }
+
+    return {
+      username: usuario,
+      accessToken,
+      groupId: grupo,
+      companyId: empresa,
+      name: usuario,
+    };
+
   }
 
   /**
@@ -70,7 +112,7 @@ export class AuthUseCases {
       throw new AppError('Senha de administrador incorreta', StatusCodes.UNAUTHORIZED);
     }
 
-    const accessToken = AuthService.generateToken('admin', 1, 0, 1);
+    const accessToken = AuthService.generateToken('admin', 1, 1);
 
     if (accessToken === 'JWT_SECRET_NOT_FOUND') {
       throw new AppError('Erro ao gerar token de acesso', StatusCodes.INTERNAL_SERVER_ERROR);

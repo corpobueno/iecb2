@@ -35,7 +35,7 @@ export const ensureAuthenticated: RequestHandler = async (req, res, next) => {
         errors: { default: 'Token inválido' }
       });
     }
-console.log(`[Auth Middleware] Token verificado com sucesso:`, { username: jwtData.username });
+//console.log(`[Auth Middleware] Token verificado com sucesso:`, { username: jwtData.username });
     // Armazena as informações do usuário no objeto req.user
     req.user = {
       username: jwtData.username,

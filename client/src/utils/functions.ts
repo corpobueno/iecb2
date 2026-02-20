@@ -216,22 +216,6 @@ export function formatTimeToISODateString(timeValue: string | undefined): string
   return '';
 }
 
-
-export function getStorage(key: string | undefined): any {
-  if (!key) return {};
-  try {
-    const item = localStorage.getItem(key);
-    return item ? JSON.parse(item) : {};
-  } catch (error) {
-    console.error(`Error getting item ${key} from localStorage`, error);
-    return {};
-  }
-}
-
-export function setStorage(key: string, value: string | number | undefined) {
-  localStorage.setItem(key, JSON.stringify(String((value))));
-}
-
 /**
  * Formata um número de CPF (11 dígitos) para o formato XXX.XXX.XXX-XX.
  * Retorna uma string vazia se o CPF for inválido.
@@ -315,3 +299,34 @@ export function getLocalDateString(date?: string | Date): string {
 
   return parsedDate.format('YYYY-MM-DD');
 }
+// funções de localStorage/sessionStorage com tratamento de erros e suporte a tipos mais flexíveis
+export function getStorage(key: string | undefined): any {
+  if (!key) return {};
+  try {
+    const item = localStorage.getItem(key);
+    return item ? JSON.parse(item) : {};
+  } catch (error) {
+    console.error(`Error getting item ${key} from localStorage`, error);
+    return {};
+  }
+}
+
+export function setStorage(key: string, value: string | number | undefined) {
+  localStorage.setItem(key, JSON.stringify(String((value))));
+}
+
+export function getSessionStorage(key: string | undefined): any {
+  if (!key) return {};
+  try {
+    const item = sessionStorage.getItem(key);
+    return item ? JSON.parse(item) : {};
+  } catch (error) {
+    console.error(`Error getting item ${key} from sessionStorage`, error);
+    return {};
+  }
+}
+
+export function setSessionStorage(key: string, value: string | number | undefined) {
+  sessionStorage.setItem(key, JSON.stringify(String((value))));
+}
+
