@@ -1,6 +1,7 @@
-import { IPagamento, IPagamentoForm, IPagamentoProcessar, ICaixaPagamentoFiltros, ICaixaPagamentoResult, ICaixaFiltrosOptions, ICaixaDetalhesFiltros, IPagamentoDetalhe } from '../entities/IPagamento';
+import { IPagamento, IPagamentoForm, IPagamentoProcessar, ICaixaPagamentoFiltros, ICaixaPagamentoResult, ICaixaFiltrosOptions, ICaixaDetalhesFiltros, IPagamentoDetalhe, IVendaProduto } from '../entities/IPagamento';
 import PagamentoRepository from '../repositories/PagamentoRepository';
 import { AppError } from '../utils/AppError';
+import { sanitizeEmptyToNull } from '../utils/sanitizeData';
 import db from '../db';
 
 export class PagamentoUseCases {
@@ -29,7 +30,8 @@ export class PagamentoUseCases {
     if (!data.valor) {
       throw new AppError('Valor é obrigatório', 400);
     }
-    return this.repository.create(data);
+    const sanitizedData = sanitizeEmptyToNull(data);
+    return this.repository.create(sanitizedData);
   }
 
   async update(id: number, data: Partial<IPagamentoForm>): Promise<void> {
@@ -37,7 +39,8 @@ export class PagamentoUseCases {
     if (!existing) {
       throw new AppError('Pagamento não encontrado', 404);
     }
-    return this.repository.update(id, data);
+    const sanitizedData = sanitizeEmptyToNull(data);
+    return this.repository.update(id, sanitizedData);
   }
 
   async delete(id: number): Promise<void> {
@@ -132,6 +135,100 @@ export class PagamentoUseCases {
             valor: pag.valor,
             qnt: pag.qnt,
             idPagamento: pag.idPagamento,
+          });
+          ids.push(id);
+        }
+      }
+
+      await trx.commit();
+      return ids;
+    } catch (error) {
+      await trx.rollback();
+      throw error;
+    }
+  }
+
+  /**
+   * Processa venda de um produto
+   * Cria registros de pagamento vinculados ao produto
+   */
+  async processarVendaProduto(dados: IVendaProduto): Promise<number[]> {
+    const { idCliente, idProduto, caixa, pagamentos } = dados;
+
+    if (!idCliente) {
+      throw new AppError('Cliente é obrigatório', 400);
+    }
+    if (!idProduto) {
+      throw new AppError('Produto é obrigatório', 400);
+    }
+    if (!pagamentos || pagamentos.length === 0) {
+      throw new AppError('Pelo menos um pagamento é obrigatório', 400);
+    }
+
+    const trx = await db.transaction();
+    const ids: number[] = [];
+
+    try {
+      for (const pag of pagamentos) {
+        // Se for pagamento com crédito do cliente (idPagamento = 16)
+        if (pag.idPagamento === 16) {
+          // Buscar créditos disponíveis do cliente
+          const creditosDisp = await trx('pagamento_iecb')
+            .where({ id_cliente: idCliente, ativo: 1 })
+            .whereNull('id_aula')
+            .whereNull('id_produto')
+            .where('valor', '>', 0)
+            .orderBy('data', 'asc');
+
+          let valorConsumido = 0;
+          let valorRestante = pag.valor;
+
+          // Consumir créditos existentes
+          for (const credito of creditosDisp) {
+            if (valorRestante <= 0) break;
+
+            const valorCredito = Number(credito.valor);
+
+            if (valorCredito <= valorRestante) {
+              // Consumir todo o crédito (zerar)
+              await trx('pagamento_iecb')
+                .where({ id: credito.id })
+                .update({ valor: 0 });
+              valorConsumido += valorCredito;
+              valorRestante -= valorCredito;
+            } else {
+              // Consumir parcialmente o crédito
+              await trx('pagamento_iecb')
+                .where({ id: credito.id })
+                .update({ valor: valorCredito - valorRestante });
+              valorConsumido += valorRestante;
+              valorRestante = 0;
+            }
+          }
+
+          if (valorConsumido < pag.valor) {
+            throw new AppError(`Crédito insuficiente. Disponível: R$ ${valorConsumido.toFixed(2)}`, 400);
+          }
+
+          // Registrar o uso do crédito como pagamento
+          const [id] = await trx('pagamento_iecb').insert({
+            id_cliente: idCliente,
+            id_produto: idProduto,
+            caixa,
+            valor: pag.valor,
+            qnt: pag.qnt,
+            id_pagamento: pag.idPagamento,
+          });
+          ids.push(id);
+        } else {
+          // Pagamento normal
+          const [id] = await trx('pagamento_iecb').insert({
+            id_cliente: idCliente,
+            id_produto: idProduto,
+            caixa,
+            valor: pag.valor,
+            qnt: pag.qnt,
+            id_pagamento: pag.idPagamento,
           });
           ids.push(id);
         }

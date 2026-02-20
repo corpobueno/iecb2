@@ -17,7 +17,7 @@ export class DocenteRepositoryImpl implements DocenteRepository {
   }
 
   async create(data: IDocenteForm): Promise<number> {
-    const [id] = await db(this.tableName).insert(data);
+    const [id] = await db(this.tableName).insert({...data, ativo: 1});
     return id;
   }
 

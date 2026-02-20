@@ -201,12 +201,17 @@ export class PagamentoRepositoryImpl implements PagamentoRepository {
         `${this.tableName}.qnt`,
         `${this.tableName}.docente`,
         `${this.tableName}.caixa`,
+        `${this.tableName}.id_lancamentos as idLancamentos`,
+        `${this.tableName}.id_aula as idAula`,
         'acompanhamento_iecb.nome as nomeCliente',
-        'cursos_iecb.nome as nomeCurso'
+        'cursos_iecb.nome as nomeCurso',
+        'pacotes_servico.nome as nomeProduto'
       )
       .leftJoin('acompanhamento_iecb', `${this.tableName}.id_cliente`, 'acompanhamento_iecb.id')
       .leftJoin('aulas_iecb', `${this.tableName}.id_aula`, 'aulas_iecb.id')
       .leftJoin('cursos_iecb', 'aulas_iecb.id_curso', 'cursos_iecb.id')
+      .leftJoin('lancamentos_iecb', `${this.tableName}.id_lancamentos`, 'lancamentos_iecb.id')
+      .leftJoin('pacotes_servico', 'lancamentos_iecb.produto', 'pacotes_servico.id')
       .where(`${this.tableName}.ativo`, 1)
       .where(`${this.tableName}.id_pagamento`, idPagamento)
       .whereBetween(`${this.tableName}.data`, [data_inicio, `${data_fim} 23:59:59`])

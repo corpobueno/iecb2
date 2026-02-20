@@ -36,6 +36,7 @@ import { PagamentoRepositoryImpl } from './impl/PagamentoRepositoryImpl';
 import { LeadsRepositoryImpl } from './impl/LeadsRepositoryImpl';
 import { LeadsFranqueadoraRepositoryImpl } from './impl/LeadsFranqueadoraRepositoryImpl';
 import { DiarioRepositoryImpl } from './impl/DiarioRepositoryImpl';
+import { ProdutoRepositoryImpl } from './impl/ProdutoRepositoryImpl';
 
 const acompanhamentoRepository = new AcompanhamentoRepositoryImpl();
 const cursoRepository = new CursoRepositoryImpl();
@@ -47,6 +48,7 @@ const pagamentoRepository = new PagamentoRepositoryImpl();
 const leadsRepository = new LeadsRepositoryImpl();
 const leadsFranqueadoraRepository = new LeadsFranqueadoraRepositoryImpl();
 const diarioRepository = new DiarioRepositoryImpl();
+const produtoRepository = new ProdutoRepositoryImpl();
 
 // ========================================
 // CAMADA 2: USE CASES (Business Logic)
@@ -62,6 +64,7 @@ import { PagamentoUseCases } from './usecases/PagamentoUseCases';
 import { LeadsUseCases } from './usecases/LeadsUseCases';
 import { LeadsFranqueadoraUseCases } from './usecases/LeadsFranqueadoraUseCases';
 import { DiarioUseCases } from './usecases/DiarioUseCases';
+import { ProdutoUseCases } from './usecases/ProdutoUseCases';
 
 const authUseCases = new AuthUseCases();
 const acompanhamentoUseCases = new AcompanhamentoUseCases(acompanhamentoRepository);
@@ -74,6 +77,7 @@ const pagamentoUseCases = new PagamentoUseCases(pagamentoRepository);
 const leadsUseCases = new LeadsUseCases(leadsRepository);
 const leadsFranqueadoraUseCases = new LeadsFranqueadoraUseCases(leadsFranqueadoraRepository);
 const diarioUseCases = new DiarioUseCases(diarioRepository);
+const produtoUseCases = new ProdutoUseCases(produtoRepository);
 
 // ========================================
 // CAMADA 3: CONTROLLERS (Presentation)
@@ -89,6 +93,7 @@ import { PagamentoController } from './controllers/PagamentoController';
 import { LeadsController } from './controllers/LeadsController';
 import { LeadsFranqueadoraController } from './controllers/LeadsFranqueadoraController';
 import { DiarioController } from './controllers/DiarioController';
+import { ProdutoController } from './controllers/ProdutoController';
 
 const authController = new AuthController(authUseCases);
 const acompanhamentoController = new AcompanhamentoController(acompanhamentoUseCases);
@@ -101,6 +106,7 @@ const pagamentoController = new PagamentoController(pagamentoUseCases);
 const leadsController = new LeadsController(leadsUseCases);
 const leadsFranqueadoraController = new LeadsFranqueadoraController(leadsFranqueadoraUseCases);
 const diarioController = new DiarioController(diarioUseCases);
+const produtoController = new ProdutoController(produtoUseCases);
 
 // Rotas
 app.use('/', routes(
@@ -114,7 +120,8 @@ app.use('/', routes(
   pagamentoController,
   leadsController,
   leadsFranqueadoraController,
-  diarioController
+  diarioController,
+  produtoController
 ));
 
 // Inicialização do servidor

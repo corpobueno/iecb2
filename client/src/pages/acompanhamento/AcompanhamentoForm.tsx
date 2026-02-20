@@ -1,7 +1,7 @@
 import { Grid } from '@mui/material';
 import { VTextField, VFormContainer, VPhoneField } from '../../components/forms';
 import { IAcompanhamentoForm } from '../../entities/Iecb';
-import { useEffect } from 'react';
+import { useEffect, useRef } from 'react';
 
 interface Props {
   handleSave: (data: IAcompanhamentoForm) => void;
@@ -11,13 +11,19 @@ interface Props {
 }
 
 export const AcompanhamentoForm = ({ handleSave, isLoading = false, project, methods }: Props) => {
+  const lastProjectRef = useRef<string>('');
+
   useEffect(() => {
-    if (project) {
+    // Só atualiza se o project realmente mudou (para edição)
+    const projectKey = JSON.stringify(project);
+    if (project && projectKey !== lastProjectRef.current) {
+      lastProjectRef.current = projectKey;
       Object.keys(project).forEach((key) => {
         methods.setValue(key, project[key as keyof IAcompanhamentoForm]);
       });
     }
-  }, [project, methods]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [project]);
 
   return (
     <VFormContainer sx={{ maxHeight: 'calc(100vh - 90px)', overflow: 'auto' }} methods={methods} handleSave={handleSave}>

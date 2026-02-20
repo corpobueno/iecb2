@@ -381,8 +381,97 @@ export interface IPagamentoDetalhe {
   qnt: number;
   nomeCliente: string;
   nomeCurso: string;
+  nomeProduto: string;
   docente: string;
   caixa: string;
+  idLancamentos: number | null;
+  idAula: number | null;
+}
+
+// ========================================
+// PRODUTOS
+// ========================================
+export interface IProduto {
+  id: number;
+  nome: string;
+  precoVenda: number;
+  empresa: number;
+  active: number;
+  categoria?: string;
+  saldo?: number;
+  custo?: number;
+  total_saida?: number;
+}
+
+export interface IProdutoPage {
+  data: IProduto[];
+  totalCount: number;
+}
+
+// ========================================
+// LANÇAMENTOS (Vendas de Produtos)
+// ========================================
+export interface ILancamento {
+  id: number;
+  idCliente: number;
+  produto: number;
+  usuario: string;
+  data: Date;
+  // Campos de join
+  nomeCliente?: string;
+  nomeProduto?: string;
+  // Campos de pagamento vinculado
+  valor?: number;
+  qnt?: number;
+  idPagamento?: number;
+}
+
+export interface ILancamentoPage {
+  data: ILancamento[];
+  totalCount: number;
+}
+
+export interface ILancamentoForm {
+  idCliente: number;
+  produto: number;
+  valor: number;
+  qnt: number;
+  idPagamento: number;
+  usuario: string;
+}
+
+// ========================================
+// VENDA DE PRODUTOS
+// ========================================
+export interface IVendaProdutoForm {
+  idCliente: number;
+  idProduto: number;
+  usuario?: string;
+  pagamentos: Array<{
+    idPagamento: number;
+    valor: number;
+    qnt: number;
+  }>;
+}
+
+export interface IVendaProduto {
+  id: number;
+  idCliente: number;
+  idProduto: number;
+  data: Date;
+  valor: number;
+  qnt: number;
+  idPagamento: number;
+  caixa: string;
+  ativo: number;
+  // Campos de join
+  nomeCliente?: string;
+  nomeProduto?: string;
+}
+
+export interface IVendaProdutoPage {
+  data: IVendaProduto[];
+  totalCount: number;
 }
 
 // ========================================

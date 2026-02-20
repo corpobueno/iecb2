@@ -89,6 +89,17 @@ export class PagamentoController {
     }
   }
 
+  async processarVendaProduto(req: Request, res: Response) {
+    try {
+      const caixa = req.user?.username || '';
+      const dados = { ...req.body, caixa };
+      const ids = await this.useCases.processarVendaProduto(dados);
+      return res.status(StatusCodes.CREATED).json({ ids });
+    } catch (error) {
+      handleError(error, res);
+    }
+  }
+
   async getCaixaPagamentos(req: Request, res: Response) {
     try {
       const filtros = {

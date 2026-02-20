@@ -15,8 +15,10 @@ export const useVForm = <TFieldValues extends FieldValues = FieldValues, TContex
   useEffect(() => {
     if (onSubmitCallback) {
       methods.handleSubmit(onSubmitCallback)();
+      setOnSubmitCallback(null); // Reset para evitar re-submissões
     }
-  }, [onSubmitCallback, methods]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [onSubmitCallback]);
 
   const handleSave = useCallback((onSubmit: (data: TFieldValues) => void) => {
     setOnSubmitCallback(() => onSubmit);

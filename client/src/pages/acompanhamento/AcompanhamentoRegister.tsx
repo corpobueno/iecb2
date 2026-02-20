@@ -23,24 +23,25 @@ const formValidationSchema = yup.object().shape({
   idLeads: yup.number().optional(),
 });
 
+const initialValues: IAcompanhamentoForm = {
+  nome: '',
+  telefone: '5562',
+  email: '',
+  endereco: '',
+  dataNascimento: '',
+  interesse: '',
+  nota: '',
+};
+
 const AcompanhamentoRegister: React.FC = () => {
   const { id = false } = useParams();
   const navigate = useNavigate();
   const { showSnackbarMessage } = useSnackbar();
   const { save, ...methods } = useVForm<IAcompanhamentoForm>({
     resolver: yupResolver(formValidationSchema) as any,
+    defaultValues: initialValues,
   });
   const [isLoading, setIsLoading] = useState(false);
-
-  const initialValues: IAcompanhamentoForm = {
-    nome: '',
-    telefone: '5562',
-    email: '',
-    endereco: '',
-    dataNascimento: '',
-    interesse: '',
-    nota: '',
-  };
   const [project, setProject] = useState<IAcompanhamentoForm>(initialValues);
 
   useEffect(() => {

@@ -1,6 +1,7 @@
 import { IAcompanhamento, IAcompanhamentoForm } from '../entities/IAcompanhamento';
 import AcompanhamentoRepository from '../repositories/AcompanhamentoRepository';
 import { AppError } from '../utils/AppError';
+import { sanitizeEmptyToNull } from '../utils/sanitizeData';
 
 export class AcompanhamentoUseCases {
   constructor(private repository: AcompanhamentoRepository) {}
@@ -24,7 +25,8 @@ export class AcompanhamentoUseCases {
     if (!data.telefone) {
       throw new AppError('Telefone é obrigatório', 400);
     }
-    return this.repository.create(data);
+    const sanitizedData = sanitizeEmptyToNull(data);
+    return this.repository.create(sanitizedData);
   }
 
   async update(id: number, data: Partial<IAcompanhamentoForm>): Promise<void> {
@@ -32,7 +34,8 @@ export class AcompanhamentoUseCases {
     if (!existing) {
       throw new AppError('Acompanhamento não encontrado', 404);
     }
-    return this.repository.update(id, data);
+    const sanitizedData = sanitizeEmptyToNull(data);
+    return this.repository.update(id, sanitizedData);
   }
 
   async delete(id: number): Promise<void> {

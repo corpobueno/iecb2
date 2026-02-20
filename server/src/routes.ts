@@ -12,6 +12,7 @@ import { PagamentoController } from './controllers/PagamentoController';
 import { LeadsController } from './controllers/LeadsController';
 import { LeadsFranqueadoraController } from './controllers/LeadsFranqueadoraController';
 import { DiarioController } from './controllers/DiarioController';
+import { ProdutoController } from './controllers/ProdutoController';
 
 export default (
   authController: AuthController,
@@ -24,7 +25,8 @@ export default (
   pagamentoController: PagamentoController,
   leadsController: LeadsController,
   leadsFranqueadoraController: LeadsFranqueadoraController,
-  diarioController: DiarioController
+  diarioController: DiarioController,
+  produtoController: ProdutoController
 ) => {
   const router = express.Router();
 
@@ -144,6 +146,14 @@ export default (
   // DIARIO ROUTES
   // =====================================================
   router.get('/diario', ensureAuthenticated, (req, res) => diarioController.getDiario(req, res));
+
+  // =====================================================
+  // PRODUTOS ROUTES
+  // =====================================================
+  router.get('/produto', ensureAuthenticated, (req, res) => produtoController.findAll(req, res));
+  router.get('/produto/lancamentos', ensureAuthenticated, (req, res) => produtoController.findLancamentos(req, res));
+  router.post('/produto/venda', ensureAuthenticated, (req, res) => produtoController.processarVenda(req, res));
+  router.get('/produto/:id', ensureAuthenticated, (req, res) => produtoController.getById(req, res));
 
   return router;
 };
