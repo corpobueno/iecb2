@@ -1,4 +1,4 @@
-import { useNavigate, useParams } from 'react-router-dom';
+import { useNavigate } from 'react-router-dom';
 import { PageContainer } from '../../../components/containers/PageContainer';
 import { ProductForm } from './ProductForm';
 import { ILancamentoForm } from '../../../entities/Iecb';
@@ -21,7 +21,7 @@ const formValidationSchema = yup.object().shape({
 });
 
 const ProductRegister: React.FC = () => {
-  const { id = false } = useParams();
+ // const { id = false } = useParams();
   const navigate = useNavigate();
   const { showSnackbarMessage } = useSnackbar();
   const { user } = useAuth();
