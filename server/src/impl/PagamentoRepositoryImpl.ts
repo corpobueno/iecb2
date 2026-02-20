@@ -199,10 +199,13 @@ export class PagamentoRepositoryImpl implements PagamentoRepository {
         `${this.tableName}.data`,
         `${this.tableName}.valor`,
         `${this.tableName}.qnt`,
+        `${this.tableName}.id_cliente as idCliente`,
+        `${this.tableName}.id_pagamento as idPagamento`,
         `${this.tableName}.docente`,
         `${this.tableName}.caixa`,
         `${this.tableName}.id_lancamentos as idLancamentos`,
         `${this.tableName}.id_aula as idAula`,
+        `${this.tableName}.id_aluno as idAluno`,
         'acompanhamento_iecb.nome as nomeCliente',
         'cursos_iecb.nome as nomeCurso',
         'pacotes_servico.nome as nomeProduto'

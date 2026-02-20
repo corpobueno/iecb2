@@ -143,4 +143,15 @@ export class PagamentoController {
       handleError(error, res);
     }
   }
+
+  async estornar(req: Request, res: Response) {
+    try {
+      const id = Number(req.params.id);
+      const caixa = req.user?.username || '';
+      const idEstorno = await this.useCases.estornar(id, caixa);
+      return res.status(StatusCodes.CREATED).json({ id: idEstorno, message: 'Estorno realizado com sucesso' });
+    } catch (error) {
+      handleError(error, res);
+    }
+  }
 }

@@ -189,4 +189,22 @@ export const PagamentoService = {
       return new Error('Erro ao buscar detalhes dos pagamentos.');
     }
   },
+
+  estornar: async (id: number): Promise<{ id: number; message: string } | Error> => {
+    try {
+      const { data } = await Api.post(`/pagamento/estornar/${id}`);
+
+      if (data) {
+        return data;
+      }
+
+      return new Error('Erro ao estornar pagamento.');
+    } catch (error) {
+      console.error(error);
+      if (error instanceof Error) {
+        return error;
+      }
+      return new Error('Erro ao estornar pagamento.');
+    }
+  },
 };

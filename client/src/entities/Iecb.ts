@@ -379,6 +379,8 @@ export interface IPagamentoDetalhe {
   data: Date;
   valor: number;
   qnt: number;
+  idCliente: number;
+  idPagamento: number;
   nomeCliente: string;
   nomeCurso: string;
   nomeProduto: string;
@@ -386,6 +388,7 @@ export interface IPagamentoDetalhe {
   caixa: string;
   idLancamentos: number | null;
   idAula: number | null;
+  idAluno: number | null;
 }
 
 // ========================================

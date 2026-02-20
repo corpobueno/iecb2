@@ -265,4 +265,31 @@ export class PagamentoUseCases {
     }
     return this.repository.getCaixaDetalhes(filtros);
   }
+
+  /**
+   * Estorna um pagamento criando um registro com valor negativo
+   * @param id ID do pagamento original
+   * @param caixa Login do usuário que está realizando o estorno
+   */
+  async estornar(id: number, caixa: string): Promise<number> {
+    const original = await this.repository.getById(id);
+    if (!original) {
+      throw new AppError('Pagamento não encontrado', 404);
+    }
+
+    // Criar registro de estorno com valor negativo
+    const estornoData = sanitizeEmptyToNull({
+      idCliente: original.idCliente,
+      idAula: original.idAula,
+      idAluno: original.idAluno,
+      idLancamentos: original.idLancamentos,
+      docente: original.docente,
+      caixa: caixa,
+      valor: -Math.abs(Number(original.valor)),
+      qnt: original.qnt,
+      idPagamento: original.idPagamento,
+    });
+
+    return this.repository.create(estornoData);
+  }
 }

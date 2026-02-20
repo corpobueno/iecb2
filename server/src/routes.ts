@@ -113,6 +113,7 @@ export default (
   router.get('/pagamento/:id', ensureAuthenticated, (req, res) => pagamentoController.getById(req, res));
   router.post('/pagamento', ensureAuthenticated, (req, res) => pagamentoController.create(req, res));
   router.post('/pagamento/processar', ensureAuthenticated, (req, res) => pagamentoController.processarPagamentoAluno(req, res));
+  router.post('/pagamento/estornar/:id', ensureAuthenticated, (req, res) => pagamentoController.estornar(req, res));
   router.put('/pagamento/:id', ensureAuthenticated, (req, res) => pagamentoController.update(req, res));
   router.delete('/pagamento/:id', ensureAuthenticated, (req, res) => pagamentoController.delete(req, res));
 
