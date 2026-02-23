@@ -1,6 +1,7 @@
 import { useEffect, useState, useMemo, useCallback } from 'react';
-import { Box, Icon, IconButton, MenuItem, TableBody, TableCell, TablePagination, TableRow, TextField, Typography } from '@mui/material';
+import { Box, Icon, IconButton, MenuItem, TableBody, TableCell, TablePagination, TableRow, TextField, Tooltip, Typography } from '@mui/material';
 import { useNavigate, useSearchParams } from 'react-router-dom';
+import dayjs from 'dayjs';
 import { ProdutoService } from '../../../api/services/ProdutoService';
 import { Environment } from '../../../api/axios-config/environment';
 import { VTable, VTableFooter } from '../../../components/grids/VTable';
@@ -67,6 +68,29 @@ const ProductList = () => {
 
   const totalVendas = rows.reduce((acc, item) => acc + (item.valor || 0), 0);
 
+  const isToday = (date: Date | string) => {
+    return dayjs(date).format('YYYY-MM-DD') === dayjs().format('YYYY-MM-DD');
+  };
+
+  const handleDelete = async (item: ILancamento) => {
+    if (!isToday(item.data)) {
+      showSnackbarMessage('Só é possível excluir lançamentos do dia atual', 'warning');
+      return;
+    }
+
+    if (!window.confirm(`Confirma a exclusão do lançamento #${item.id}?`)) {
+      return;
+    }
+
+    const result = await ProdutoService.excluirLancamento(item.id);
+    if (result instanceof Error) {
+      showSnackbarMessage(result.message, 'error');
+    } else {
+      showSnackbarMessage('Lançamento excluído com sucesso', 'success');
+      loadData();
+    }
+  };
+
   return (
     <PageContainer
       toolbar={
@@ -100,9 +124,16 @@ const ProductList = () => {
           {rows.map((item) => (
             <TableRow key={item.id} sx={{ cursor: 'pointer' }}>
               <TableCell>
-                <IconButton onClick={() => navigate(`/pagamentos/produto/editar/${item.id}`)} title="Editar">
-                  <Icon>edit</Icon>
-                </IconButton>
+                <Tooltip title={isToday(item.data) ? 'Editar' : 'Só é possível editar lançamentos de hoje'}>
+                  <span>
+                    <IconButton
+                      onClick={() => navigate(`/pagamentos/produto/editar/${item.id}`)}
+                      disabled={!isToday(item.data)}
+                    >
+                      <Icon>edit</Icon>
+                    </IconButton>
+                  </span>
+                </Tooltip>
               </TableCell>
               <TableCell>{formatDate(item.data)}</TableCell>
               <TableCell>{item.nomeCliente || '-'}</TableCell>
@@ -115,9 +146,17 @@ const ProductList = () => {
               <TableCell>{item.qnt || 1}</TableCell>
               <TableCell>{item.usuario}</TableCell>
               <TableCell>
-                <IconButton onClick={() => console.log('delete', item.id)} title="Excluir">
-                  <Icon>delete</Icon>
-                </IconButton>
+                <Tooltip title={isToday(item.data) ? 'Excluir' : 'Só é possível excluir lançamentos de hoje'}>
+                  <span>
+                    <IconButton
+                      onClick={() => handleDelete(item)}
+                      disabled={!isToday(item.data)}
+                      color={isToday(item.data) ? 'error' : 'default'}
+                    >
+                      <Icon>delete</Icon>
+                    </IconButton>
+                  </span>
+                </Tooltip>
               </TableCell>
             </TableRow>
           ))}

@@ -53,4 +53,35 @@ export class ProdutoController {
       handleError(error, res);
     }
   }
+
+  async excluirLancamento(req: Request, res: Response) {
+    try {
+      const id = Number(req.params.id);
+      await this.useCases.excluirLancamento(id);
+      return res.status(StatusCodes.NO_CONTENT).send();
+    } catch (error) {
+      handleError(error, res);
+    }
+  }
+
+  async getLancamentoById(req: Request, res: Response) {
+    try {
+      const id = Number(req.params.id);
+      const result = await this.useCases.getLancamentoById(id);
+      return res.status(StatusCodes.OK).json(result);
+    } catch (error) {
+      handleError(error, res);
+    }
+  }
+
+  async atualizarLancamento(req: Request, res: Response) {
+    try {
+      const id = Number(req.params.id);
+      const dados = req.body;
+      await this.useCases.atualizarLancamento(id, dados);
+      return res.status(StatusCodes.NO_CONTENT).send();
+    } catch (error) {
+      handleError(error, res);
+    }
+  }
 }

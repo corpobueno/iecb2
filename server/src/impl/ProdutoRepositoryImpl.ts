@@ -1,5 +1,5 @@
 import db from '../db';
-import { IProdutoSaldo, ILancamentoFiltros, ILancamentoPage } from '../entities/IProduto';
+import { IProdutoSaldo, ILancamentoFiltros, ILancamentoPage, ILancamento } from '../entities/IProduto';
 import ProdutoRepository from '../repositories/ProdutoRepository';
 
 export class ProdutoRepositoryImpl implements ProdutoRepository {
@@ -68,5 +68,28 @@ export class ProdutoRepositoryImpl implements ProdutoRepository {
       .offset(offset);
 
     return { data, totalCount };
+  }
+
+  async getLancamentoById(id: number): Promise<ILancamento | null> {
+    const result = await db(this.lancamentosTable)
+      .leftJoin('acompanhamento_iecb', `${this.lancamentosTable}.id_cliente`, 'acompanhamento_iecb.id')
+      .leftJoin('pacotes_servico', `${this.lancamentosTable}.produto`, 'pacotes_servico.id')
+      .leftJoin('pagamento_iecb', `${this.lancamentosTable}.id`, 'pagamento_iecb.id_lancamentos')
+      .select(
+        `${this.lancamentosTable}.id`,
+        `${this.lancamentosTable}.id_cliente as idCliente`,
+        `${this.lancamentosTable}.produto`,
+        `${this.lancamentosTable}.usuario`,
+        `${this.lancamentosTable}.data`,
+        'acompanhamento_iecb.nome as nomeCliente',
+        'pacotes_servico.nome as nomeProduto',
+        'pagamento_iecb.valor',
+        'pagamento_iecb.qnt',
+        'pagamento_iecb.id_pagamento as idPagamento'
+      )
+      .where(`${this.lancamentosTable}.id`, id)
+      .first();
+
+    return result ?? null;
   }
 }

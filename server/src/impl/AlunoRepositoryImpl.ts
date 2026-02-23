@@ -76,4 +76,19 @@ export class AlunoRepositoryImpl implements AlunoRepository {
       .first();
     return Number(result?.total || 0);
   }
+
+  async findByCliente(idCliente: number): Promise<IAluno[]> {
+    return db(this.tableName)
+      .select(
+        `${this.tableName}.*`,
+        'cursos_iecb.nome as nomeCurso',
+        'docentes.nome as nomeDocente'
+      )
+      .leftJoin('aulas_iecb', `${this.tableName}.id_aula`, 'aulas_iecb.id')
+      .leftJoin('cursos_iecb', 'aulas_iecb.id_curso', 'cursos_iecb.id')
+      .leftJoin('docentes', 'aulas_iecb.docente', 'docentes.login')
+      .where(`${this.tableName}.id_aluno`, idCliente)
+      .where(`${this.tableName}.ativo`, 1)
+      .orderBy(`${this.tableName}.data`, 'desc');
+  }
 }

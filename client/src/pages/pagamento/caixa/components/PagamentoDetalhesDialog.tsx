@@ -142,6 +142,7 @@ export const PagamentoDetalhesDialog = ({ open, onClose, forma, filtros }: Pagam
                       <TableCell>Curso</TableCell>
                       <TableCell>Professora</TableCell>
                       <TableCell>Caixa</TableCell>
+                      <TableCell align="center">Parcelas</TableCell>
                       <TableCell align="right">Valor</TableCell>
                       <TableCell align="center">Ações</TableCell>
                     </TableRow>
@@ -155,6 +156,7 @@ export const PagamentoDetalhesDialog = ({ open, onClose, forma, filtros }: Pagam
                         <TableCell>{pg.nomeCurso || '-'}</TableCell>
                         <TableCell>{pg.docente || '-'}</TableCell>
                         <TableCell>{pg.caixa || '-'}</TableCell>
+                        <TableCell align="center">{pg.qnt > 1 ? `${pg.qnt}x` : '-'}</TableCell>
                         <TableCell align="right">
                           <Typography fontWeight={500} color={Number(pg.valor) < 0 ? 'error' : 'primary'}>
                             {toCash(pg.valor)}
@@ -203,6 +205,7 @@ export const PagamentoDetalhesDialog = ({ open, onClose, forma, filtros }: Pagam
                       <TableCell>Cliente</TableCell>
                       <TableCell>Produto</TableCell>
                       <TableCell>Caixa</TableCell>
+                      <TableCell align="center">Parcelas</TableCell>
                       <TableCell align="right">Valor</TableCell>
                       <TableCell align="center">Ações</TableCell>
                     </TableRow>
@@ -215,6 +218,7 @@ export const PagamentoDetalhesDialog = ({ open, onClose, forma, filtros }: Pagam
                         <TableCell>{pg.nomeCliente || '-'}</TableCell>
                         <TableCell>{pg.nomeProduto || '-'}</TableCell>
                         <TableCell>{pg.caixa || '-'}</TableCell>
+                        <TableCell align="center">{pg.qnt > 1 ? `${pg.qnt}x` : '-'}</TableCell>
                         <TableCell align="right">
                           <Typography fontWeight={500} color={Number(pg.valor) < 0 ? 'error' : 'primary'}>
                             {toCash(pg.valor)}

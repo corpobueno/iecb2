@@ -3,7 +3,7 @@ import { IPagamento, IPagamentoForm, ICaixaPagamentoFiltros, ICaixaPagamentoResu
 import PagamentoRepository from '../repositories/PagamentoRepository';
 
 const FORMAS_PAGAMENTO: Record<number, string> = {
-
+  0: 'Bonificação',
   1: 'Débito',
   2: 'Dinheiro',
   3: 'Cheque',
@@ -113,6 +113,7 @@ export class PagamentoRepositoryImpl implements PagamentoRepository {
       .sum('valor as total')
       .count('* as count')
       .where('ativo', 1)
+      .whereNot('id_pagamento', 6)
       .whereBetween('data', [data_inicio, `${data_fim} 23:59:59`])
       .groupBy('id_pagamento');
 

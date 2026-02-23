@@ -61,4 +61,8 @@ export class AlunoUseCases {
   async sumValorByAula(idAula: number): Promise<number> {
     return this.repository.sumValorByAula(idAula);
   }
+
+  async findByCliente(idCliente: number): Promise<IAluno[]> {
+    return this.repository.findByCliente(idCliente);
+  }
 }

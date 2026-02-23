@@ -7,6 +7,7 @@ const NotFound = lazy(() => import('../pages/NotFound'));
 
 // Acompanhamento
 const AcompanhamentoList = lazy(() => import('../pages/acompanhamento/AcompanhamentoList'));
+const AcompanhamentoDetails = lazy(() => import('../pages/acompanhamento/AcompanhamentoDetails'));
 const AcompanhamentoRegister = lazy(() => import('../pages/acompanhamento/AcompanhamentoRegister'));
 
 // Curso
@@ -51,6 +52,7 @@ export const AppRoutes = () => {
         <Route path="/" element={<AcompanhamentoList />} />
         <Route path="/acompanhamento" element={<AcompanhamentoList />} />
         <Route path="/acompanhamento/cadastrar" element={<AcompanhamentoRegister />} />
+        <Route path="/acompanhamento/:id" element={<AcompanhamentoDetails />} />
         <Route path="/acompanhamento/editar/:id" element={<AcompanhamentoRegister />} />
 
         {/* Cursos */}

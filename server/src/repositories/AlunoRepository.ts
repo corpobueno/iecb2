@@ -9,4 +9,5 @@ export default interface AlunoRepository {
   updateStatus(id: number, status: number): Promise<void>;
   delete(id: number): Promise<void>;
   sumValorByAula(idAula: number): Promise<number>;
+  findByCliente(idCliente: number): Promise<IAluno[]>;
 }

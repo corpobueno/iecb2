@@ -59,4 +59,8 @@ export class AgendaUseCases {
   async countByAula(idAula: number): Promise<number> {
     return this.repository.countByAula(idAula);
   }
+
+  async findByAula(idAula: number): Promise<IAgenda[]> {
+    return this.repository.findByAula(idAula);
+  }
 }

@@ -26,9 +26,7 @@ export class LeadsFranqueadoraRepositoryImpl implements LeadsFranqueadoraReposit
       query = query.whereBetween('data_cadastro', [dataInicio, `${dataFim} 23:59:59`]);
     }
 
-    if (status) {
-      query = query.where('status', status);
-    }
+    query = query.where('status', status || 'nao');
 
     if (user && status !== 'nao') {
       query = query.where('user', user);

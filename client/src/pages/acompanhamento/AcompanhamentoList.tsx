@@ -9,6 +9,7 @@ import { SearchToolbar } from '../../components/contents/SearchToolbar';
 import { IAcompanhamento } from '../../entities/Iecb';
 import { useSnackbar } from '../../contexts/SnackBarProvider';
 import { formatDate, toTel } from '../../utils/functions';
+import { Eye } from 'lucide-react';
 
 const AcompanhamentoList = () => {
   const [searchParams, setSearchParams] = useSearchParams();
@@ -67,21 +68,25 @@ const AcompanhamentoList = () => {
         />
       }
     >
-      <VTable h={'95px'} titles={['', 'Nome', 'Telefone', 'Email', 'Interesse', 'Data', '']}>
+      <VTable h={'95px'} titles={['', 'Nome', 'Telefone', 'Interesse', 'Cadastro', 'Código', '']}>
         <TableBody>
           {rows.map((item) => (
-            <TableRow key={item.id} sx={{ cursor: 'pointer' }}>
-              <TableCell>
+            <TableRow
+              key={item.id}
+              sx={{ cursor: 'pointer', '&:hover': { bgcolor: 'action.hover' } }}
+              onClick={() => navigate(`/acompanhamento/${item.id}`)}
+            >
+              <TableCell onClick={(e) => e.stopPropagation()}>
                 <IconButton onClick={() => navigate(`/acompanhamento/editar/${item.id}`)} title="Editar">
-                  <Icon>edit</Icon>
+                  <Eye color='#2354b1' />
                 </IconButton>
               </TableCell>
               <TableCell>{item.nome}</TableCell>
               <TableCell>{toTel(item.telefone)}</TableCell>
-              <TableCell>{item.email || '-'}</TableCell>
               <TableCell>{item.interesse || '-'}</TableCell>
               <TableCell>{formatDate(item.dataCadastro)}</TableCell>
-              <TableCell>
+              <TableCell>{item.id}</TableCell>
+              <TableCell onClick={(e) => e.stopPropagation()}>
                 <IconButton onClick={() => handleDelete(item.id)} title="Excluir">
                   <Icon>delete</Icon>
                 </IconButton>

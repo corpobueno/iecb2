@@ -83,4 +83,12 @@ export class AgendaRepositoryImpl implements AgendaRepository {
       .first();
     return Number(result?.count) || 0;
   }
+
+  async findByAula(idAula: number): Promise<IAgenda[]> {
+    return db(this.tableName)
+      .select(`${this.tableName}.*`)
+      .where('id_aula', idAula)
+      .where('ativo', 1)
+      .orderBy('data', 'asc');
+  }
 }

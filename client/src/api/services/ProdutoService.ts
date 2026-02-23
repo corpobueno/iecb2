@@ -1,6 +1,6 @@
 import { Api } from '../axios-config';
 import { Environment } from '../axios-config/environment';
-import { IProduto, IProdutoPage, IVendaProdutoForm, ILancamentoPage } from '../../entities/Iecb';
+import { IProduto, IProdutoPage, IVendaProdutoForm, ILancamentoPage, ILancamento, ILancamentoForm } from '../../entities/Iecb';
 
 export const ProdutoService = {
   /**
@@ -93,6 +93,64 @@ export const ProdutoService = {
         return error;
       }
       return new Error('Erro ao listar os lançamentos.');
+    }
+  },
+
+  /**
+   * Exclui um lançamento (venda de produto)
+   */
+  excluirLancamento: async (id: number): Promise<void | Error> => {
+    try {
+      await Api.delete(`/produto/lancamentos/${id}`);
+    } catch (error) {
+      console.error(error);
+      if (error instanceof Error) {
+        return error;
+      }
+      return new Error('Erro ao excluir o lançamento.');
+    }
+  },
+
+  /**
+   * Busca um lançamento por ID
+   */
+  getLancamentoById: async (id: number): Promise<ILancamento | Error> => {
+    try {
+      const { data } = await Api.get<ILancamento>(`/produto/lancamentos/${id}`);
+
+      if (data) {
+        return data;
+      }
+
+      return new Error('Erro ao buscar o lançamento.');
+    } catch (error) {
+      console.error(error);
+      if (error instanceof Error) {
+        return error;
+      }
+      return new Error('Erro ao buscar o lançamento.');
+    }
+  },
+
+  /**
+   * Atualiza um lançamento (venda de produto)
+   */
+  atualizarLancamento: async (id: number, dados: ILancamentoForm): Promise<void | Error> => {
+    try {
+      await Api.put(`/produto/lancamentos/${id}`, {
+        idCliente: dados.idCliente,
+        idProduto: dados.produto,
+        usuario: dados.usuario,
+        valor: dados.valor,
+        qnt: dados.qnt,
+        idPagamento: dados.idPagamento,
+      });
+    } catch (error) {
+      console.error(error);
+      if (error instanceof Error) {
+        return error;
+      }
+      return new Error('Erro ao atualizar o lançamento.');
     }
   },
 };

@@ -84,6 +84,7 @@ export default (
   router.get('/agenda/periodo', ensureAuthenticated, (req, res) => agendaController.findByPeriodo(req, res));
   router.get('/agenda/data/:data', ensureAuthenticated, (req, res) => agendaController.findByData(req, res));
   router.get('/agenda/aula/:idAula/count', ensureAuthenticated, (req, res) => agendaController.countByAula(req, res));
+  router.get('/agenda/aula/:idAula', ensureAuthenticated, (req, res) => agendaController.findByAula(req, res));
   router.get('/agenda/:id', ensureAuthenticated, (req, res) => agendaController.getById(req, res));
   router.post('/agenda', ensureAuthenticated, (req, res) => agendaController.create(req, res));
   router.put('/agenda/:id', ensureAuthenticated, (req, res) => agendaController.update(req, res));
@@ -95,6 +96,7 @@ export default (
   router.get('/aluno/aula/:idAula', ensureAuthenticated, (req, res) => alunoController.findByAula(req, res));
   router.get('/aluno/aula/:idAula/data/:data', ensureAuthenticated, (req, res) => alunoController.findByAulaAndData(req, res));
   router.get('/aluno/aula/:idAula/sum', ensureAuthenticated, (req, res) => alunoController.sumValorByAula(req, res));
+  router.get('/aluno/cliente/:idCliente', ensureAuthenticated, (req, res) => alunoController.findByCliente(req, res));
   router.get('/aluno/:id', ensureAuthenticated, (req, res) => alunoController.getById(req, res));
   router.post('/aluno', ensureAuthenticated, (req, res) => alunoController.create(req, res));
   router.put('/aluno/:id', ensureAuthenticated, (req, res) => alunoController.update(req, res));
@@ -153,6 +155,9 @@ export default (
   // =====================================================
   router.get('/produto', ensureAuthenticated, (req, res) => produtoController.findAll(req, res));
   router.get('/produto/lancamentos', ensureAuthenticated, (req, res) => produtoController.findLancamentos(req, res));
+  router.get('/produto/lancamentos/:id', ensureAuthenticated, (req, res) => produtoController.getLancamentoById(req, res));
+  router.put('/produto/lancamentos/:id', ensureAuthenticated, (req, res) => produtoController.atualizarLancamento(req, res));
+  router.delete('/produto/lancamentos/:id', ensureAuthenticated, (req, res) => produtoController.excluirLancamento(req, res));
   router.post('/produto/venda', ensureAuthenticated, (req, res) => produtoController.processarVenda(req, res));
   router.get('/produto/:id', ensureAuthenticated, (req, res) => produtoController.getById(req, res));
 

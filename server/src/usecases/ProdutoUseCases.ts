@@ -1,4 +1,4 @@
-import { IProdutoSaldo, ILancamentoFiltros, ILancamentoPage, IVendaProdutoForm } from '../entities/IProduto';
+import { IProdutoSaldo, ILancamentoFiltros, ILancamentoPage, IVendaProdutoForm, ILancamento } from '../entities/IProduto';
 import ProdutoRepository from '../repositories/ProdutoRepository';
 import { AppError } from '../utils/AppError';
 import { sanitizeEmptyToNull } from '../utils/sanitizeData';
@@ -21,6 +21,44 @@ export class ProdutoUseCases {
 
   async findLancamentos(filtros: ILancamentoFiltros): Promise<ILancamentoPage> {
     return this.repository.findLancamentos(filtros);
+  }
+
+  async getLancamentoById(id: number): Promise<ILancamento> {
+    const result = await this.repository.getLancamentoById(id);
+    if (!result) {
+      throw new AppError('Lançamento não encontrado', 404);
+    }
+    return result;
+  }
+
+  async atualizarLancamento(id: number, dados: { idCliente: number; idProduto: number; usuario: string; valor: number; qnt: number; idPagamento: number }): Promise<void> {
+    const trx = await db.transaction();
+
+    try {
+      // Atualizar lançamento
+      await trx('lancamentos_iecb')
+        .where({ id })
+        .update({
+          id_cliente: dados.idCliente,
+          produto: dados.idProduto,
+          usuario: dados.usuario,
+        });
+
+      // Atualizar pagamento vinculado
+      await trx('pagamento_iecb')
+        .where({ id_lancamentos: id })
+        .update({
+          id_cliente: dados.idCliente,
+          valor: dados.valor,
+          qnt: dados.qnt,
+          id_pagamento: dados.idPagamento,
+        });
+
+      await trx.commit();
+    } catch (error) {
+      await trx.rollback();
+      throw error;
+    }
   }
 
   /**
@@ -109,6 +147,26 @@ export class ProdutoUseCases {
 
       await trx.commit();
       return { idLancamento, idsPagamento };
+    } catch (error) {
+      await trx.rollback();
+      throw error;
+    }
+  }
+
+  /**
+   * Exclui um lançamento (venda de produto) e seus pagamentos relacionados
+   */
+  async excluirLancamento(id: number): Promise<void> {
+    const trx = await db.transaction();
+
+    try {
+      // Excluir pagamentos relacionados
+      await trx('pagamento_iecb').where({ id_lancamentos: id }).delete();
+
+      // Excluir lançamento
+      await trx('lancamentos_iecb').where({ id }).delete();
+
+      await trx.commit();
     } catch (error) {
       await trx.rollback();
       throw error;

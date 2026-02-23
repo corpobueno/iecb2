@@ -8,4 +8,5 @@ export default interface AgendaRepository {
   update(id: number, data: Partial<IAgendaForm>): Promise<void>;
   delete(id: number): Promise<void>;
   countByAula(idAula: number): Promise<number>;
+  findByAula(idAula: number): Promise<IAgenda[]>;
 }

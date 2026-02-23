@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from 'react';
-import { Box, Typography } from '@mui/material';
+import { Box, CircularProgress, IconButton, Tooltip, Typography } from '@mui/material';
+import PictureAsPdfIcon from '@mui/icons-material/PictureAsPdf';
 import dayjs from 'dayjs';
 import { PagamentoService } from '../../../api/services/PagamentoService';
 import { ICaixaPagamentoResult } from '../../../entities/Iecb';
@@ -7,6 +8,7 @@ import { PagamentoCaixaFiltros, IPagamentoCaixaFiltros } from './components/Paga
 import { PagamentoCaixaGeral } from './components/PagamentoCaixaGeral';
 import { PageContainer } from '../../../components/containers/PageContainer';
 import { SearchToolbar } from '../../../components/contents/SearchToolbar';
+import { createCaixaPDF } from './utils/createCaixaPDF';
 
 const PagamentoCaixa: React.FC = () => {
   const initialFilters: IPagamentoCaixaFiltros = {
@@ -16,6 +18,7 @@ const PagamentoCaixa: React.FC = () => {
 
   const [filters, setFilters] = useState<IPagamentoCaixaFiltros>(initialFilters);
   const [isLoading, setIsLoading] = useState(false);
+  const [isGeneratingPDF, setIsGeneratingPDF] = useState(false);
   const [caixaData, setCaixaData] = useState<ICaixaPagamentoResult>({
     pagamentos: [],
     bonificacoes: [],
@@ -48,6 +51,15 @@ const PagamentoCaixa: React.FC = () => {
 
   const hasData = caixaData.sumPagamentos > 0 || caixaData.sumBonificacoes > 0;
 
+  const handleGeneratePDF = async () => {
+    setIsGeneratingPDF(true);
+    try {
+      await createCaixaPDF(filters, caixaData);
+    } finally {
+      setIsGeneratingPDF(false);
+    }
+  };
+
   return (
     <PageContainer
       toolbar={
@@ -61,6 +73,17 @@ const PagamentoCaixa: React.FC = () => {
               onFilterChange={handleFilterChange}
               initialFilters={initialFilters}
             />
+            <Tooltip title={isGeneratingPDF ? 'Gerando PDF...' : 'Gerar PDF'}>
+              <span>
+                <IconButton
+                  onClick={handleGeneratePDF}
+                  disabled={!hasData || isLoading || isGeneratingPDF}
+                  color="primary"
+                >
+                  {isGeneratingPDF ? <CircularProgress size={24} /> : <PictureAsPdfIcon />}
+                </IconButton>
+              </span>
+            </Tooltip>
           </Box>
         </SearchToolbar>
       }

@@ -152,6 +152,8 @@ export interface IAluno extends IAlunoForm {
   // Campos de join
   nomeAluno?: string;
   telefone?: string;
+  nomeCurso?: string;
+  nomeDocente?: string;
 }
 
 export interface IAlunoPage {

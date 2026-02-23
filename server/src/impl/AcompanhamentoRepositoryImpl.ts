@@ -11,12 +11,15 @@ export class AcompanhamentoRepositoryImpl implements AcompanhamentoRepository {
     let query = db(this.tableName).where('ativo', 1);
 
     if (filter) {
-      query = query.where((builder) => {
+      query.where((builder) => {
         builder
           .where('nome', 'like', `%${filter}%`)
           .orWhere('telefone', 'like', `%${filter}%`)
-          .orWhere('email', 'like', `%${filter}%`);
-      });
+          .orWhere('email', 'like', `%${filter}%`)
+      })
+      .orderBy('nome', 'asc');
+    }else{
+      query.orderBy('id', 'desc');
     }
 
     const countResult = await query.clone().count('* as totalCount').first();
@@ -25,7 +28,6 @@ export class AcompanhamentoRepositoryImpl implements AcompanhamentoRepository {
     const data = await query
       .clone()
       .select('*')
-      .orderBy('id', 'desc')
       .limit(limit)
       .offset(offset);
 

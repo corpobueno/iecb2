@@ -86,4 +86,9 @@ export const AgendaService = {
     const { data } = await Api.get(`/agenda/aula/${idAula}/count`);
     return data?.count || 0;
   },
+
+  findByAula: async (idAula: number): Promise<IAgenda[]> => {
+    const { data } = await Api.get(`/agenda/aula/${idAula}`);
+    return data || [];
+  },
 };

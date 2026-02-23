@@ -102,6 +102,9 @@ export const AgendaDetails = ({ open, onClose, agenda, onRefresh }: AgendaDetail
   const [isCanceling, setIsCanceling] = useState(false);
   const [showCancelDialog, setShowCancelDialog] = useState(false);
 
+  // Agendamentos da aula (para lista de datas)
+  const [agendamentos, setAgendamentos] = useState<IAgenda[]>([]);
+
   const loadAlunos = useCallback(async () => {
     if (!agenda) return;
     setShowSearchClient(false)
@@ -116,6 +119,10 @@ export const AgendaDetails = ({ open, onClose, agenda, onRefresh }: AgendaDetail
       if (!(sumResult instanceof Error)) {
         setSumValor(sumResult);
       }
+
+      // Carregar todos os agendamentos da aula
+      const agendamentosResult = await AgendaService.findByAula(agenda.idAula);
+      setAgendamentos(agendamentosResult);
     } catch (error) {
       showSnackbarMessage('Erro ao carregar alunos', 'error');
     } finally {
@@ -348,20 +355,27 @@ export const AgendaDetails = ({ open, onClose, agenda, onRefresh }: AgendaDetail
     }
   };
 
-  const handleCancel = async () => {
-    if (!agenda) return;
-    const count = await AgendaService.countByAula(agenda.idAula);
+  const handleCancel = () => {
+    setShowCancelDialog(true);
+  };
 
-    // Se houver apenas 1 (este que estamos excluindo), desativar a aula também
-    if (count <= 1) {
-      setShowCancelDialog(true);
-    } else {
-      await AgendaService.deleteById(agenda.id);
-      showSnackbarMessage('Agendamento cancelado');
-      onRefresh?.();
-      onClose();
+  const handleDeleteAgendamento = async (agendaId: number) => {
+    try {
+      await AgendaService.deleteById(agendaId);
+      showSnackbarMessage('Data removida');
+      // Se excluiu o agendamento atual, fechar o diálogo
+      if (agendaId === agenda?.id) {
+        onRefresh?.();
+        onClose();
+      } else {
+        // Recarregar lista de agendamentos
+        const agendamentosResult = await AgendaService.findByAula(agenda!.idAula);
+        setAgendamentos(agendamentosResult);
+        onRefresh?.();
+      }
+    } catch (error) {
+      showSnackbarMessage('Erro ao remover data', 'error');
     }
-
   };
 
   const handleConfirmCancel = async () => {
@@ -370,11 +384,11 @@ export const AgendaDetails = ({ open, onClose, agenda, onRefresh }: AgendaDetail
     setIsCanceling(true);
     try {
       await AulaService.cancel(agenda.idAula);
-      showSnackbarMessage('Agendamento cancelado e aula desativada');
+      showSnackbarMessage('Aula cancelada');
       onRefresh?.();
       onClose();
     } catch (error) {
-      showSnackbarMessage('Erro ao cancelar agendamento', 'error');
+      showSnackbarMessage('Erro ao cancelar aula', 'error');
     } finally {
       setIsCanceling(false);
     }
@@ -391,10 +405,9 @@ export const AgendaDetails = ({ open, onClose, agenda, onRefresh }: AgendaDetail
               showSaveButton={false}
               onClickBack={onClose}
             >
-              {agenda?.usuario}
               <Tooltip title="Replicar">
                 <Button
-                  color="primary"
+                  color="secondary"
                   variant="outlined"
                   onClick={handleOpenReplicate}
                   startIcon={<Replay />}
@@ -470,6 +483,26 @@ export const AgendaDetails = ({ open, onClose, agenda, onRefresh }: AgendaDetail
                 </Typography>
               </Box>
             </Box>
+
+            {/* Lista de datas */}
+            {agendamentos.length > 1 && (
+              <Box sx={{ mt: 2 }}>
+                <Typography variant="caption" color="text.secondary">Datas agendadas</Typography>
+                <Box sx={{ display: 'flex', gap: 1, flexWrap: 'wrap', mt: 0.5 }}>
+                  {agendamentos.map((ag) => (
+                    <Chip
+                      key={ag.id}
+                      label={ag.data.split('-').reverse().join('/')}
+                      size="small"
+                      variant={ag.id === agenda.id ? 'filled' : 'outlined'}
+                      color={ag.id === agenda.id ? 'primary' : 'default'}
+                      onDelete={() => handleDeleteAgendamento(ag.id)}
+                      deleteIcon={<Delete />}
+                    />
+                  ))}
+                </Box>
+              </Box>
+            )}
 
           </Paper>
 
@@ -768,7 +801,7 @@ export const AgendaDetails = ({ open, onClose, agenda, onRefresh }: AgendaDetail
         onClose={() => setShowCancelDialog(false)}
         onConfirm={handleConfirmCancel}
         title="Cancelar Aula"
-        message="Tem certeza que deseja cancelar esta aula? Todos os pagamentos vinculados à elas serão convertidos em crédito para as alunas."
+        message={`Tem certeza que deseja cancelar esta aula? ${agendamentos.length > 1 ? `Todos os ${agendamentos.length} agendamentos serão excluídos. ` : ''}Todos os pagamentos vinculados serão convertidos em crédito para as alunas.`}
       />
     </>
   );

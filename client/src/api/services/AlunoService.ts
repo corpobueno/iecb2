@@ -101,4 +101,25 @@ export const AlunoService = {
       return new Error('Erro ao calcular soma.');
     }
   },
+
+  findByCliente: async (idCliente: number): Promise<IAlunoPage | Error> => {
+    try {
+      const { data } = await Api.get(`/aluno/cliente/${idCliente}`);
+
+      if (data) {
+        return {
+          data,
+          totalCount: data.length,
+        };
+      }
+
+      return new Error('Erro ao listar os registros.');
+    } catch (error) {
+      console.error(error);
+      if (error instanceof Error) {
+        return error;
+      }
+      return new Error('Erro ao listar os registros.');
+    }
+  },
 };

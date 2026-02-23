@@ -78,4 +78,14 @@ export class AgendaController {
       handleError(error, res);
     }
   }
+
+  async findByAula(req: Request, res: Response) {
+    try {
+      const idAula = Number(req.params.idAula);
+      const result = await this.useCases.findByAula(idAula);
+      return res.status(StatusCodes.OK).json(result);
+    } catch (error) {
+      handleError(error, res);
+    }
+  }
 }

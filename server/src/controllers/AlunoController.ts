@@ -88,4 +88,14 @@ export class AlunoController {
       handleError(error, res);
     }
   }
+
+  async findByCliente(req: Request, res: Response) {
+    try {
+      const idCliente = Number(req.params.idCliente);
+      const result = await this.useCases.findByCliente(idCliente);
+      return res.status(StatusCodes.OK).json(result);
+    } catch (error) {
+      handleError(error, res);
+    }
+  }
 }
