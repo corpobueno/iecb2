@@ -113,7 +113,7 @@ export class PagamentoRepositoryImpl implements PagamentoRepository {
       .sum('valor as total')
       .count('* as count')
       .where('ativo', 1)
-      .whereNot('id_pagamento', 6)
+      .whereNotIn('id_pagamento', [0, 6, 16])
       .whereBetween('data', [data_inicio, `${data_fim} 23:59:59`])
       .groupBy('id_pagamento');
 

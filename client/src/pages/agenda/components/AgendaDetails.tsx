@@ -110,7 +110,7 @@ export const AgendaDetails = ({ open, onClose, agenda, onRefresh }: AgendaDetail
     setShowSearchClient(false)
     setIsLoading(true);
     try {
-      const result = await AlunoService.findByAulaAndData(agenda.idAula, agenda.data);
+      const result = await AlunoService.findByAula(agenda.idAula);
       if (!(result instanceof Error)) {
         setAlunos(result.data);
       }
@@ -444,7 +444,7 @@ export const AgendaDetails = ({ open, onClose, agenda, onRefresh }: AgendaDetail
 
             <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
               <Box>
-                <Typography variant="body1">#{agenda.id}  {agenda.nomeCurso || 'Aula'}</Typography>
+                <Typography variant="body1">#{agenda.idAula}  {agenda.nomeCurso || 'Aula'}</Typography>
                 <Typography variant="body2" color="text.secondary">
                   {agenda.nomeDocente}
                 </Typography>
