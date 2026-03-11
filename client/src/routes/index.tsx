@@ -44,6 +44,14 @@ const DiarioPage = lazy(() => import('../pages/diario/DiarioPage').then(m => ({ 
 const Leads = lazy(() => import('../pages/leads/principal/LeadsPrincipal'));
 const LeadsFranqueadora = lazy(() => import('../pages/leads/franqueadora/LeadsFranquadora'));
 
+// RH - Colaboradores
+const ColaboradorList = lazy(() => import('../pages/rh/colaborador/ColaboradorList'));
+const ColaboradorRegister = lazy(() => import('../pages/rh/colaborador/ColaboradorRegister'));
+const ColaboradorDetails = lazy(() => import('../pages/rh/colaborador/ColaboradorDetails'));
+
+// RH - Checklist Templates
+const ChecklistTemplateList = lazy(() => import('../pages/rh/checklist/ChecklistTemplateList'));
+
 export const AppRoutes = () => {
   return (
     <Suspense fallback={<div>Carregando...</div>}>
@@ -98,6 +106,14 @@ export const AppRoutes = () => {
 
         <Route path="/leads/franqueadora" element={<LeadsFranqueadora />} />
 
+        {/* RH - Colaboradores */}
+        <Route path="/rh/colaboradores" element={<ColaboradorList />} />
+        <Route path="/rh/colaboradores/cadastrar" element={<ColaboradorRegister />} />
+        <Route path="/rh/colaboradores/:id" element={<ColaboradorDetails />} />
+        <Route path="/rh/colaboradores/editar/:id" element={<ColaboradorRegister />} />
+
+        {/* RH - Checklist Templates */}
+        <Route path="/rh/checklist-templates" element={<ChecklistTemplateList />} />
 
         {/* 404 */}
         <Route path="*" element={<NotFound />} />

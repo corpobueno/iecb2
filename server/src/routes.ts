@@ -14,6 +14,14 @@ import { LeadsFranqueadoraController } from './controllers/LeadsFranqueadoraCont
 import { DiarioController } from './controllers/DiarioController';
 import { ProdutoController } from './controllers/ProdutoController';
 
+// RH Controllers
+import { ColaboradorController } from './controllers/rh/ColaboradorController';
+import { ChecklistTemplateController } from './controllers/rh/ChecklistTemplateController';
+import { ChecklistAdmissaoController } from './controllers/rh/ChecklistAdmissaoController';
+
+// Anexos Controller
+import { AnexosController } from './controllers/anexos/AnexosController';
+
 export default (
   authController: AuthController,
   acompanhamentoController: AcompanhamentoController,
@@ -26,7 +34,13 @@ export default (
   leadsController: LeadsController,
   leadsFranqueadoraController: LeadsFranqueadoraController,
   diarioController: DiarioController,
-  produtoController: ProdutoController
+  produtoController: ProdutoController,
+  // RH Controllers
+  colaboradorController: ColaboradorController,
+  checklistTemplateController: ChecklistTemplateController,
+  checklistAdmissaoController: ChecklistAdmissaoController,
+  // Anexos Controller
+  anexosController: AnexosController
 ) => {
   const router = express.Router();
 
@@ -160,6 +174,49 @@ export default (
   router.delete('/produto/lancamentos/:id', ensureAuthenticated, (req, res) => produtoController.excluirLancamento(req, res));
   router.post('/produto/venda', ensureAuthenticated, (req, res) => produtoController.processarVenda(req, res));
   router.get('/produto/:id', ensureAuthenticated, (req, res) => produtoController.getById(req, res));
+
+  // =====================================================
+  // RH - COLABORADORES ROUTES
+  // =====================================================
+  router.get('/rh/colaborador', ensureAuthenticated, (req, res) => colaboradorController.find(req, res));
+  router.get('/rh/colaborador/stats', ensureAuthenticated, (req, res) => colaboradorController.getStats(req, res));
+  router.get('/rh/colaborador/:id', ensureAuthenticated, (req, res) => colaboradorController.getById(req, res));
+  router.post('/rh/colaborador', ensureAuthenticated, (req, res) => colaboradorController.create(req, res));
+  router.put('/rh/colaborador/:id', ensureAuthenticated, (req, res) => colaboradorController.update(req, res));
+  router.patch('/rh/colaborador/:id/status', ensureAuthenticated, (req, res) => colaboradorController.updateStatus(req, res));
+  router.patch('/rh/colaborador/:id/recalcular-score', ensureAuthenticated, (req, res) => colaboradorController.recalcularScore(req, res));
+  router.delete('/rh/colaborador/:id', ensureAuthenticated, (req, res) => colaboradorController.delete(req, res));
+
+  // =====================================================
+  // RH - CHECKLIST TEMPLATE ROUTES
+  // =====================================================
+  router.get('/rh/checklist-template', ensureAuthenticated, (req, res) => checklistTemplateController.find(req, res));
+  router.get('/rh/checklist-template/setores', ensureAuthenticated, (req, res) => checklistTemplateController.getSetores(req, res));
+  router.get('/rh/checklist-template/setor/:setor', ensureAuthenticated, (req, res) => checklistTemplateController.findBySetor(req, res));
+  router.get('/rh/checklist-template/:id', ensureAuthenticated, (req, res) => checklistTemplateController.getById(req, res));
+  router.post('/rh/checklist-template', ensureAuthenticated, (req, res) => checklistTemplateController.create(req, res));
+  router.put('/rh/checklist-template/:id', ensureAuthenticated, (req, res) => checklistTemplateController.update(req, res));
+  router.delete('/rh/checklist-template/:id', ensureAuthenticated, (req, res) => checklistTemplateController.delete(req, res));
+
+  // =====================================================
+  // RH - CHECKLIST ADMISSÃO ROUTES
+  // =====================================================
+  router.get('/rh/checklist-admissao/colaborador/:idColaborador', ensureAuthenticated, (req, res) => checklistAdmissaoController.findByColaborador(req, res));
+  router.get('/rh/checklist-admissao/colaborador/:idColaborador/stats', ensureAuthenticated, (req, res) => checklistAdmissaoController.getStats(req, res));
+  router.get('/rh/checklist-admissao/:id', ensureAuthenticated, (req, res) => checklistAdmissaoController.getById(req, res));
+  router.post('/rh/checklist-admissao', ensureAuthenticated, (req, res) => checklistAdmissaoController.create(req, res));
+  router.put('/rh/checklist-admissao/:id', ensureAuthenticated, (req, res) => checklistAdmissaoController.update(req, res));
+  router.patch('/rh/checklist-admissao/:id/concluir', ensureAuthenticated, (req, res) => checklistAdmissaoController.marcarConcluido(req, res));
+  router.patch('/rh/checklist-admissao/:id/desmarcar', ensureAuthenticated, (req, res) => checklistAdmissaoController.desmarcarConcluido(req, res));
+  router.delete('/rh/checklist-admissao/:id', ensureAuthenticated, (req, res) => checklistAdmissaoController.delete(req, res));
+
+  // =====================================================
+  // ANEXOS ROUTES
+  // =====================================================
+  router.get('/anexos/referencia/:tabela/:id_ref', ensureAuthenticated, (req, res) => anexosController.getByReferencia(req, res));
+  router.get('/anexos/:id', ensureAuthenticated, (req, res) => anexosController.getById(req, res));
+  router.post('/anexos', ensureAuthenticated, (req, res) => anexosController.create(req, res));
+  router.delete('/anexos/:id', ensureAuthenticated, (req, res) => anexosController.delete(req, res));
 
   return router;
 };

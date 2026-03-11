@@ -1,12 +1,13 @@
 import { IAluno, IAlunoForm } from '../entities/IAluno';
 import AlunoRepository from '../repositories/AlunoRepository';
+import PagamentoRepository from '../repositories/PagamentoRepository';
 import { AppError } from '../utils/AppError';
 
 /**
  * Aluno representa a matrícula de um cliente (acompanhamento) em uma aula
  */
 export class AlunoUseCases {
-  constructor(private repository: AlunoRepository) {}
+  constructor(private repository: AlunoRepository, private pagamentoRepository: PagamentoRepository) { }
 
   async findByAula(idAula: number, ativo: number = 1): Promise<IAluno[]> {
     return this.repository.findByAula(idAula, ativo);
@@ -55,6 +56,15 @@ export class AlunoUseCases {
     if (!existing) {
       throw new AppError('Matrícula não encontrada', 404);
     }
+
+    const pagamentos = await this.pagamentoRepository.findByCliente(id, 'id_aluno')
+
+    for (const i in pagamentos) {
+      console.log(pagamentos[i], 'convertido em credito')
+      await this.pagamentoRepository.convertToCredit(pagamentos[i].id);
+
+    }
+
     return this.repository.delete(id);
   }
 

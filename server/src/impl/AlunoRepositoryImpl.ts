@@ -77,7 +77,7 @@ export class AlunoRepositoryImpl implements AlunoRepository {
     return Number(result?.total || 0);
   }
 
-  async findByCliente(idCliente: number): Promise<IAluno[]> {
+  async findByCliente(idCliente: number ): Promise<IAluno[]> {
     return db(this.tableName)
       .select(
         `${this.tableName}.*`,

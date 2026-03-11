@@ -38,6 +38,12 @@ import { LeadsFranqueadoraRepositoryImpl } from './impl/LeadsFranqueadoraReposit
 import { DiarioRepositoryImpl } from './impl/DiarioRepositoryImpl';
 import { ProdutoRepositoryImpl } from './impl/ProdutoRepositoryImpl';
 
+// RH Repositories
+import { ColaboradorRepositoryImpl, ChecklistTemplateRepositoryImpl, ChecklistAdmissaoRepositoryImpl } from './impl/rh';
+
+// Anexos Repository
+import { AnexosRepositoryImpl } from './impl/anexos/AnexosRepositoryImpl';
+
 const acompanhamentoRepository = new AcompanhamentoRepositoryImpl();
 const cursoRepository = new CursoRepositoryImpl();
 const docenteRepository = new DocenteRepositoryImpl();
@@ -49,6 +55,14 @@ const leadsRepository = new LeadsRepositoryImpl();
 const leadsFranqueadoraRepository = new LeadsFranqueadoraRepositoryImpl();
 const diarioRepository = new DiarioRepositoryImpl();
 const produtoRepository = new ProdutoRepositoryImpl();
+
+// RH Repositories
+const colaboradorRepository = new ColaboradorRepositoryImpl();
+const checklistTemplateRepository = new ChecklistTemplateRepositoryImpl();
+const checklistAdmissaoRepository = new ChecklistAdmissaoRepositoryImpl();
+
+// Anexos Repository
+const anexosRepository = new AnexosRepositoryImpl();
 
 // ========================================
 // CAMADA 2: USE CASES (Business Logic)
@@ -66,18 +80,32 @@ import { LeadsFranqueadoraUseCases } from './usecases/LeadsFranqueadoraUseCases'
 import { DiarioUseCases } from './usecases/DiarioUseCases';
 import { ProdutoUseCases } from './usecases/ProdutoUseCases';
 
+// RH UseCases
+import { ColaboradorUseCases, ChecklistTemplateUseCases, ChecklistAdmissaoUseCases } from './usecases/rh';
+
+// Anexos UseCases
+import { AnexosUseCases } from './usecases/anexos/AnexosUseCases';
+
 const authUseCases = new AuthUseCases();
 const acompanhamentoUseCases = new AcompanhamentoUseCases(acompanhamentoRepository);
 const cursoUseCases = new CursoUseCases(cursoRepository);
 const docenteUseCases = new DocenteUseCases(docenteRepository);
 const aulaUseCases = new AulaUseCases(aulaRepository, pagamentoRepository, agendaRepository);
 const agendaUseCases = new AgendaUseCases(agendaRepository);
-const alunoUseCases = new AlunoUseCases(alunoRepository);
+const alunoUseCases = new AlunoUseCases(alunoRepository, pagamentoRepository);
 const pagamentoUseCases = new PagamentoUseCases(pagamentoRepository);
 const leadsUseCases = new LeadsUseCases(leadsRepository);
 const leadsFranqueadoraUseCases = new LeadsFranqueadoraUseCases(leadsFranqueadoraRepository);
 const diarioUseCases = new DiarioUseCases(diarioRepository);
 const produtoUseCases = new ProdutoUseCases(produtoRepository);
+
+// RH UseCases
+const colaboradorUseCases = new ColaboradorUseCases(colaboradorRepository, checklistTemplateRepository, checklistAdmissaoRepository);
+const checklistTemplateUseCases = new ChecklistTemplateUseCases(checklistTemplateRepository);
+const checklistAdmissaoUseCases = new ChecklistAdmissaoUseCases(checklistAdmissaoRepository, colaboradorRepository);
+
+// Anexos UseCases
+const anexosUseCases = new AnexosUseCases(anexosRepository);
 
 // ========================================
 // CAMADA 3: CONTROLLERS (Presentation)
@@ -95,6 +123,12 @@ import { LeadsFranqueadoraController } from './controllers/LeadsFranqueadoraCont
 import { DiarioController } from './controllers/DiarioController';
 import { ProdutoController } from './controllers/ProdutoController';
 
+// RH Controllers
+import { ColaboradorController, ChecklistTemplateController, ChecklistAdmissaoController } from './controllers/rh';
+
+// Anexos Controller
+import { AnexosController } from './controllers/anexos/AnexosController';
+
 const authController = new AuthController(authUseCases);
 const acompanhamentoController = new AcompanhamentoController(acompanhamentoUseCases);
 const cursoController = new CursoController(cursoUseCases);
@@ -107,6 +141,14 @@ const leadsController = new LeadsController(leadsUseCases);
 const leadsFranqueadoraController = new LeadsFranqueadoraController(leadsFranqueadoraUseCases);
 const diarioController = new DiarioController(diarioUseCases);
 const produtoController = new ProdutoController(produtoUseCases);
+
+// RH Controllers
+const colaboradorController = new ColaboradorController(colaboradorUseCases);
+const checklistTemplateController = new ChecklistTemplateController(checklistTemplateUseCases);
+const checklistAdmissaoController = new ChecklistAdmissaoController(checklistAdmissaoUseCases);
+
+// Anexos Controller
+const anexosController = new AnexosController(anexosUseCases);
 
 // Rotas
 app.use('/', routes(
@@ -121,7 +163,13 @@ app.use('/', routes(
   leadsController,
   leadsFranqueadoraController,
   diarioController,
-  produtoController
+  produtoController,
+  // RH Controllers
+  colaboradorController,
+  checklistTemplateController,
+  checklistAdmissaoController,
+  // Anexos Controller
+  anexosController
 ));
 
 // Inicialização do servidor

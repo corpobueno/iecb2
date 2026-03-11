@@ -18,7 +18,7 @@ const FORMAS_PAGAMENTO: Record<number, string> = {
 export class PagamentoRepositoryImpl implements PagamentoRepository {
   private readonly tableName = 'pagamento_iecb';
 
-  async findByCliente(idCliente: number, ativo: number): Promise<IPagamento[]> {
+  async findByCliente(idCliente: number, ref = 'id_cliente'): Promise<IPagamento[]> {
     return db(this.tableName)
       .select(
         `${this.tableName}.*`,
@@ -28,8 +28,8 @@ export class PagamentoRepositoryImpl implements PagamentoRepository {
       .leftJoin('acompanhamento_iecb', `${this.tableName}.id_cliente`, 'acompanhamento_iecb.id')
       .leftJoin('aulas_iecb', `${this.tableName}.id_aula`, 'aulas_iecb.id')
       .leftJoin('cursos_iecb', 'aulas_iecb.id_curso', 'cursos_iecb.id')
-      .where(`${this.tableName}.id_cliente`, idCliente)
-      .where(`${this.tableName}.ativo`, ativo)
+      .where(`${this.tableName}.${ref}`, idCliente)
+      .where(`${this.tableName}.ativo`, 1)
       .orderBy(`${this.tableName}.data`, 'desc');
   }
 
@@ -73,20 +73,34 @@ export class PagamentoRepositoryImpl implements PagamentoRepository {
   }
 
   async cancelByaula(idAula: number): Promise<void> {
-    await db(this.tableName).update({
-      idAula: null,
-      idAluno: null,
-      docente: null
-    })
-      .where({ idAula });
+    const pagamentos = await db(this.tableName)
+      .select('id_cliente as idCliente', 'valor', 'caixa')
+      .where({ id_aula: idAula, ativo: 1 });
+
+    for (const pagamento of pagamentos) {
+      await db(this.tableName).insert({
+        id_cliente: pagamento.idCliente,
+        valor: pagamento.valor,
+        caixa: pagamento.caixa,
+        id_pagamento: 16
+      });
+    }
   }
 
   async convertToCredit(id: number): Promise<void> {
-    await db(this.tableName).update({
-      idAula: null,
-      idAluno: null,
-      docente: null
-    }).where({ id });
+    const pagamento = await db(this.tableName)
+      .select('id_cliente as idCliente', 'valor', 'caixa')
+      .where({ id })
+      .first();
+
+    if (pagamento) {
+      await db(this.tableName).insert({
+        id_cliente: pagamento.idCliente,
+        valor: pagamento.valor,
+        caixa: pagamento.caixa,
+        id_pagamento: 16
+      });
+    }
   }
 
   async delete(id: number): Promise<void> {
@@ -98,7 +112,7 @@ export class PagamentoRepositoryImpl implements PagamentoRepository {
     const result = await db(this.tableName)
       .where({ idCliente, ativo: 1 })
       .whereNull('id_aula')
-      .whereNot('id_pagamento', 6)
+      .where('id_pagamento', 16)
       .sum('valor as creditos')
       .first();
     return { creditos: Number(result?.creditos || 0) };

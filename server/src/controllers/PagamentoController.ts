@@ -9,8 +9,7 @@ export class PagamentoController {
   async findByCliente(req: Request, res: Response) {
     try {
       const idCliente = Number(req.params.idCliente);
-      const ativo = Number(req.query.ativo ?? 1);
-      const result = await this.useCases.findByCliente(idCliente, ativo);
+      const result = await this.useCases.findByCliente(idCliente);
       return res.status(StatusCodes.OK).json(result);
     } catch (error) {
       handleError(error, res);

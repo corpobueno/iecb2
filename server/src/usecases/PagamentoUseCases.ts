@@ -7,8 +7,8 @@ import db from '../db';
 export class PagamentoUseCases {
   constructor(private repository: PagamentoRepository) {}
 
-  async findByCliente(idCliente: number, ativo: number = 1): Promise<IPagamento[]> {
-    return this.repository.findByCliente(idCliente, ativo);
+  async findByCliente(idCliente: number): Promise<IPagamento[]> {
+    return this.repository.findByCliente(idCliente);
   }
 
   async findByAula(idAula: number, ativo: number = 1): Promise<IPagamento[]> {
@@ -51,7 +51,7 @@ export class PagamentoUseCases {
 
     // Se for "Crédito Cliente" (idPagamento = 16), converter de volta em crédito
     if (existing.idPagamento === 16) {
-      return this.repository.convertToCredit(id);
+      await this.repository.convertToCredit(id);
     }
 
     return this.repository.delete(id);
@@ -79,6 +79,7 @@ export class PagamentoUseCases {
           const creditosDisp = await trx('pagamento_iecb')
             .where({ id_cliente: idCliente, ativo: 1 })
             .whereNull('id_aula')
+            .where('id_pagamento', 16)
             .where('valor', '>', 0)
             .orderBy('data', 'asc');
 

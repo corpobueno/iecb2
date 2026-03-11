@@ -24,8 +24,8 @@ export const setupExpressServer = (): { app: Application; server: Server } => {
     ],
     credentials: true,
   }));
-  app.use(bodyParser.json());
-  app.use(bodyParser.urlencoded({ extended: false }));
+  app.use(bodyParser.json({ limit: '50mb' }));
+  app.use(bodyParser.urlencoded({ extended: false, limit: '50mb' }));
   app.use(cookieParser()); // Adiciona o middleware para parsing de cookies
 
   const server = new Server(app);
