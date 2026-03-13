@@ -98,9 +98,10 @@ const ColaboradorList = () => {
       toolbar={
         <SearchToolbar
           showMenuButton
+          showInputSearch
           onClickNew={() => navigate('/rh/colaboradores/cadastrar')}
-          searchValue={search}
-          onSearchChange={handleSearchChange}
+          textSearch={search}
+          handleSearchChange={handleSearchChange}
         >
           <TextField
             select

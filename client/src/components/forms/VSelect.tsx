@@ -1,33 +1,35 @@
+import React from 'react';
 import { TextField, TextFieldProps } from '@mui/material';
-import { useController, Control } from 'react-hook-form';
+import { Controller, useFormContext } from 'react-hook-form';
 
-type TVSelectProps = TextFieldProps & {
+type TVSelectProps = Omit<TextFieldProps, 'name'> & {
   name: string;
-  control: Control<any>; // Use Control com any para maior flexibilidade
 };
 
-export const VSelect: React.FC<TVSelectProps> = ({ name, control, children, ...rest }) => {
-  const {
-    field: { onChange, onBlur, value, ref },
-    fieldState: { error },
-  } = useController({ name, control });
+export const VSelect: React.FC<TVSelectProps> = ({ name, children, InputLabelProps, ...rest }) => {
+  const { control } = useFormContext();
 
   return (
-    <TextField
-      {...rest}
-      select
-      id={name}
-      error={!!error}
-      helperText={error ? error.message : ''}
-      value={value || 2}
-      onChange={(e) => {
-        onChange(e); // Atualiza o valor do campo no react-hook-form
-        if (rest.onChange) rest.onChange(e); // Chama o onChange adicional se for passado no VSelect
-      }}
-      onBlur={onBlur}
-      inputRef={ref}
-    >
-      {children}
-    </TextField>
+    <Controller
+      name={name}
+      control={control}
+      render={({ field, fieldState: { error } }) => (
+        <TextField
+          {...rest}
+          {...field}
+          select
+          id={name}
+          error={!!error}
+          helperText={error?.message}
+          value={field.value ?? ''}
+          InputLabelProps={{
+            shrink: !!field.value || field.value === 0 || InputLabelProps?.shrink,
+            ...InputLabelProps,
+          }}
+        >
+          {children}
+        </TextField>
+      )}
+    />
   );
 };

@@ -85,6 +85,7 @@ export interface IChecklistTemplatePage {
 export interface IChecklistAdmissaoForm {
   idColaborador: number;
   item: string;
+  concluido?: number;
 }
 
 export interface IChecklistAdmissao extends IChecklistAdmissaoForm {
