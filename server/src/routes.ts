@@ -47,8 +47,8 @@ export default (
   // =====================================================
   // AUTH ROUTES
   // =====================================================
-  // Auth via postMessage (Sistema A envia frameToken + usuario + grupo)
-  router.post('/auth/post-message', (req, res) => authController.authPostMessage(req, res));
+  // Auth via code exchange (valida code com o backend do Corpo Bueno, server-to-server)
+  router.get('/auth/exchange', (req, res) => authController.exchangeCode(req, res));
   // Fallback admin
   router.post('/auth/admin', (req, res) => authController.authAdminPassword(req, res));
   router.post('/auth/logout', (req, res) => authController.logout(req, res));

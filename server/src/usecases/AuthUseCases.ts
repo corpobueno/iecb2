@@ -19,42 +19,54 @@ export class AuthUseCases {
   constructor() { }
 
   /**
-   * Autentica via postMessage do Sistema A (Corpo Bueno)
-   * Recebe frameToken, usuario, empresa, grupo - valida e gera JWT
+   * Troca um authorization code por uma sessão autenticada.
+   * Valida o code diretamente com o backend do Corpo Bueno (server-to-server).
    */
-  async authViaPostMessage(
-    frameToken: string,
-    usuario: string,
-    empresa: number,
-    grupo: number
-  ): Promise<IAuthResult> {
-    // Valida o FRAME_TOKEN compartilhado
-    const expectedFrameToken = process.env.FRAME_TOKEN;
-    if (!expectedFrameToken || frameToken !== expectedFrameToken) {
-      throw new AppError('Token de frame inválido', StatusCodes.UNAUTHORIZED);
+  async exchangeCode(code: string): Promise<IAuthResult> {
+    const corpoBuenoApiUrl = process.env.CORPO_BUENO_API_URL;
+    if (!corpoBuenoApiUrl) {
+      throw new AppError('CORPO_BUENO_API_URL não configurada', StatusCodes.INTERNAL_SERVER_ERROR);
     }
 
-    if (!usuario || !empresa || !grupo) {
-      throw new AppError('Dados de autenticação incompletos: usuario=' + usuario + ', empresa=' + empresa + ', grupo=' + grupo, StatusCodes.BAD_REQUEST);
+    console.log('[AuthUseCases] Validando code com Corpo Bueno em:', corpoBuenoApiUrl);
+
+    const response = await fetch(`${corpoBuenoApiUrl}/auth/validate-frame-token`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ token: code }),
+    });
+
+    if (!response.ok) {
+      const status = response.status;
+      console.error('[AuthUseCases] Corpo Bueno retornou erro:', status);
+      if (status === 401) {
+        throw new AppError('Código de autenticação inválido ou expirado', StatusCodes.UNAUTHORIZED);
+      }
+      throw new AppError('Erro ao validar código com o sistema principal', status);
     }
 
-    // Gera JWT local
-    const accessToken = AuthService.generateToken(
-      usuario,
-      empresa,
-      grupo
-    );
+    const userData = await response.json();
+    const { login, empresa, grupo, nome } = userData;
+    console.log('[AuthUseCases] Corpo Bueno validou com sucesso:', { login, empresa, grupo });
+
+    if (!login || !empresa || !grupo) {
+      throw new AppError('Dados de usuário incompletos retornados pelo sistema principal', StatusCodes.BAD_REQUEST);
+    }
+
+    const accessToken = AuthService.generateToken(login, empresa, grupo);
 
     if (accessToken === 'JWT_SECRET_NOT_FOUND') {
       throw new AppError('Erro ao gerar token de acesso', StatusCodes.INTERNAL_SERVER_ERROR);
     }
 
+    console.log('[AuthUseCases] JWT local gerado para:', login);
+
     return {
-      username: usuario,
+      username: login,
       accessToken,
       groupId: grupo,
       companyId: empresa,
-      name: usuario,
+      name: nome || login,
     };
   }
 

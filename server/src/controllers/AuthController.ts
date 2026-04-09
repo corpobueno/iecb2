@@ -8,35 +8,34 @@ export class AuthController {
   constructor(private authCases: AuthUseCases) { }
 
   /**
-   * Autentica via postMessage do Sistema A
-   * Recebe frameToken, usuario, empresa, grupo via body
+   * Troca um authorization code (frame token do Corpo Bueno) por uma sessão local.
+   * O code é validado server-to-server com o backend do Corpo Bueno.
    */
-  async authPostMessage(req: Request, res: Response) {
+  async exchangeCode(req: Request, res: Response) {
     try {
-      const { frameToken, usuario, empresa, grupo } = req.body;
+      const code = req.query.code as string;
+      console.log('[AUTH] Exchange iniciado, code recebido:', !!code);
 
-      console.log('[AUTH] authPostMessage:', { usuario, empresa, grupo, hasToken: !!frameToken });
-
-      if (!frameToken) {
+      if (!code) {
+        console.warn('[AUTH] Exchange sem code');
         return res.status(StatusCodes.BAD_REQUEST).json({
-          errors: { default: 'frameToken não informado' }
+          errors: { default: 'Código de autenticação não informado' }
         });
       }
 
-      const result = await this.authCases.authViaPostMessage(frameToken, usuario, empresa, grupo);
+      const result = await this.authCases.exchangeCode(code);
+      console.log('[AUTH] Exchange bem-sucedido, usuário:', result.username, 'empresa:', result.companyId, 'grupo:', result.groupId);
 
-      console.log('[AUTH] Sessão criada:', { username: result.username, groupId: result.groupId });
-
-      // Define o cookie com o novo token
       res.cookie('accessToken', result.accessToken, {
         httpOnly: true,
-        secure: process.env.NODE_ENV === 'production',
-        sameSite: 'lax',
+        secure: true,
+        sameSite: 'none',
         maxAge: 24 * 60 * 60 * 1000, // 24 horas
       });
 
       return res.status(StatusCodes.OK).json(result);
     } catch (error) {
+      console.error('[AUTH] Exchange falhou:', error instanceof Error ? error.message : error);
       handleError(error, res);
     }
   }
@@ -114,8 +113,8 @@ export class AuthController {
       // Define o cookie com o novo token
       res.cookie('accessToken', result.accessToken, {
         httpOnly: true,
-        secure: process.env.NODE_ENV === 'production',
-        sameSite: 'lax',
+        secure: true,
+        sameSite: 'none',
         maxAge: 24 * 60 * 60 * 1000, // 24 horas
       });
 

@@ -1,8 +1,6 @@
-import { createContext, useContext, useEffect, useState, ReactNode, useRef } from 'react';
+import { createContext, useContext, useEffect, useState, ReactNode } from 'react';
 import { Environment } from '../api/axios-config/environment';
-import { AuthService } from '../api/services/AuthService';
 import { setSessionStorage } from '../utils/functions';
-import { IValidateRequest } from '../entities/Auth';
 
 interface IUser {
   login: string;
@@ -29,8 +27,6 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
   const [user, setUser] = useState<IUser | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const authAttemptedRef = useRef(false);
-  const authCompletedRef = useRef(false); // Rastreia se autenticação foi completada
 
   /**
    * Login via senha de administrador (fallback)
@@ -52,8 +48,6 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
 
       const data = await response.json();
 
-      sessionStorage.setItem('iecb_token', data.accessToken);
-
       const adminUser: IUser = {
         login: data.username,
         nome: data.name,
@@ -72,104 +66,28 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     }
   };
 
-
-  type ValidateResult =
-    | { status: 'authenticated';}
-    | { status: 'not_authenticated' }
-    | { status: 'error'; message: string };
-
-  const validate = async (postUser: IValidateRequest): Promise<ValidateResult> => {
-    try {
-      const response = await AuthService.validate(postUser);
-
-      if (response instanceof Error) {
-        // Verifica se é erro 401 (não autenticado) - inclui mensagem do interceptor
-        const errorMessage = response.message || '';
-        const is401Error = errorMessage.includes('401') ||
-          errorMessage.toLowerCase().includes('unauthorized') ||
-          errorMessage.toLowerCase().includes('não autenticado') ||
-          errorMessage.toLowerCase().includes('sessão expirada');
-
-        if (is401Error) {
-          console.log('[Auth] Usuário não autenticado (401):', errorMessage);
-          return { status: 'not_authenticated' };
-        }
-        return { status: 'error', message: errorMessage };
-      }
-        setSessionStorage('username', response.username);
-        setSessionStorage('groupId', response.groupId);
-        setSessionStorage('companyId', response.companyId);
-        setUser({
-          login: response.username,
-          nome: response.name,
-          empresa: response.companyId,
-          grupo: response.groupId,
-        });
-        return { status: 'authenticated' };
-      
-    } catch (err) {
-      console.error('[Auth] Erro ao validar:', err);
-      return { status: 'error', message: 'Erro ao validar sessão' };
-    }
-  };
-
   /**
-   * Autentica via postMessage do Sistema A
+   * Troca o authorization code por uma sessão, chamando o backend IECB
+   * que valida o code server-to-server com o Corpo Bueno.
    */
-  const authenticateViaPostMessage = async (
-    frameToken: string,
-    usuario: string,
-    empresa: number,
-    grupo: number
-  ) => {
-    console.log('[Auth] Autenticando via postMessage:', { usuario, empresa, grupo });
-
-
-
-
+  const exchangeCode = async (code: string) => {
+    console.log('[Auth] Code detectado na URL, iniciando exchange...');
     try {
-      const response = await fetch(`${Environment.URL_BASE}/auth/post-message`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+      const response = await fetch(`${Environment.URL_BASE}/auth/exchange?code=${encodeURIComponent(code)}`, {
         credentials: 'include',
-        body: JSON.stringify({ frameToken, usuario, empresa, grupo }),
       });
 
       if (!response.ok) {
         const errorData = await response.json().catch(() => ({}));
-        console.error('[Auth] Erro na autenticação:', errorData);
-
-        // Mensagens de erro específicas para o cliente
-        let errorMessage = 'Erro na autenticação';
-        if (response.status === 401) {
-          // Token inválido - token recebido não corresponde ao do .env
-          errorMessage = errorData.errors?.default || 'Token de autenticação inválido. Verifique a configuração do sistema.';
-        } else if (response.status === 400) {
-          errorMessage = errorData.errors?.default || 'Dados de autenticação incompletos';
-        } else {
-          errorMessage = errorData.errors?.default || 'Erro interno ao autenticar';
-        }
-
-        authCompletedRef.current = true; // Marca como completado para evitar timeout
-        setError(errorMessage);
+        const msg = errorData.message || errorData.errors?.default || 'Código de autenticação inválido';
+        console.error('[Auth] Falha no exchange:', response.status, msg);
+        setError(msg);
         setIsLoading(false);
-
-        // Notifica Sistema A do erro com mensagem clara
-        if (window.parent !== window) {
-          window.parent.postMessage({
-            type: 'AUTH_ERROR',
-            message: errorMessage,
-            source: 'IECB'
-          }, '*');
-        }
         return;
       }
 
       const data = await response.json();
-      console.log('[Auth] Autenticação bem-sucedida:', data.username);
-
-      authCompletedRef.current = true;
-      sessionStorage.setItem('iecb_token', data.accessToken);
+      console.log('[Auth] Exchange bem-sucedido, usuário:', data.username);
 
       const authenticatedUser: IUser = {
         login: data.username,
@@ -180,126 +98,48 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
 
       setUser(authenticatedUser);
       setError(null);
-      setIsLoading(false);
+      setSessionStorage('username', data.username);
+      setSessionStorage('groupId', data.groupId);
+      setSessionStorage('companyId', data.companyId);
       sessionStorage.setItem('iecb_user', JSON.stringify(authenticatedUser));
-
-      // Notifica Sistema A do sucesso
-      if (window.parent !== window) {
-        window.parent.postMessage({ type: 'AUTH_SUCCESS', source: 'IECB' }, '*');
-      }
     } catch (err) {
-      console.error('[Auth] Erro:', err);
-      authCompletedRef.current = true; // Marca como completado para evitar timeout
-      setError('Erro de conexão');
+      console.error('[Auth] Erro de conexão no exchange:', err);
+      setError('Erro de conexão ao autenticar');
+    } finally {
       setIsLoading(false);
     }
   };
 
   useEffect(() => {
-    const isInIframe = window.self !== window.top;
+    const params = new URLSearchParams(window.location.search);
+    const code = params.get('code');
 
-    // Se não está em iframe, verifica sessionStorage e para de carregar
-    if (!isInIframe) {
-      console.log('[Auth] Não está em iframe, verificando sessão local');
-      const storedUser = sessionStorage.getItem('iecb_user');
-      const storedToken = sessionStorage.getItem('iecb_token');
+    if (code) {
+      // Limpa o code da URL para não ficar exposto no histórico
+      const url = new URL(window.location.href);
+      url.searchParams.delete('code');
+      window.history.replaceState({}, '', url.pathname + url.search);
 
-      if (storedUser && storedToken) {
-        try {
-          const parsedUser = JSON.parse(storedUser);
-          console.log('[Auth] Sessão existente encontrada:', parsedUser.login);
-          authCompletedRef.current = true;
-          setUser(parsedUser);
-        } catch {
-          sessionStorage.removeItem('iecb_user');
-          sessionStorage.removeItem('iecb_token');
-        }
-      }
-      setIsLoading(false);
+      exchangeCode(code);
       return;
     }
 
-    // Em iframe: SEMPRE escuta postMessage para validar usuário
-    console.log('[Auth] Em iframe, aguardando postMessage do Sistema A');
-
-    const handleMessage = async (event: MessageEvent) => {
-      // Ignora mensagens que não são de autenticação
-      if (!event.data || event.data.type !== 'AUTH_DATA') {
-        return;
+    // Sem code: verifica sessão local existente
+    const storedUser = sessionStorage.getItem('iecb_user');
+    if (storedUser) {
+      try {
+        const parsed = JSON.parse(storedUser);
+        console.log('[Auth] Sessão local restaurada:', parsed.login);
+        setUser(parsed);
+      } catch {
+        console.warn('[Auth] Sessão local inválida, removendo');
+        sessionStorage.removeItem('iecb_user');
       }
+    } else {
+      console.log('[Auth] Nenhum code na URL e nenhuma sessão local');
+    }
 
-      // Evita processamento duplicado
-      if (authAttemptedRef.current) {
-        console.log('[Auth] Autenticação já em andamento, ignorando');
-        return;
-      }
-      authAttemptedRef.current = true;
-
-      const { frameToken, usuario, empresa, grupo } = event.data;
-      console.log('[Auth] postMessage recebido:', { usuario, empresa, grupo });
-
-      // FLUXO:
-      // 1. Chama validate() para verificar sessão no backend
-      // 2. Se autenticado e mesmo usuário → nada a fazer
-      // 3. Se autenticado mas usuário diferente → reautenticar com novo usuário
-      // 4. Se não autenticado (401) → autenticar (backend valida o frameToken)
-
-      const validationResult = await validate({ usuario, empresa, grupo });
-
-      switch (validationResult.status) {
-        case 'authenticated':
-          // Mesmo usuário já autenticado no backend - nada a fazer
-          console.log('[Auth] Sessão válida para o mesmo usuário, reutilizando');
-          authCompletedRef.current = true;
-
-          setIsLoading(false);
-
-          if (window.parent !== window) {
-            window.parent.postMessage({ type: 'AUTH_SUCCESS', source: 'IECB' }, '*');
-          }
-          break;
-
-        case 'not_authenticated':
-          // Erro 401 - não autenticado no backend
-          // Tenta autenticar via postMessage (backend valida frameToken com .env)
-          // Se frameToken inválido, backend retorna erro 401 com mensagem clara
-          console.log('[Auth] Usuário não autenticado no backend, tentando autenticar...');
-          authenticateViaPostMessage(frameToken, usuario, empresa, grupo);
-          break;
-
-        case 'error':
-          // Erro genérico (rede, servidor, etc)
-          console.error('[Auth] Erro na validação:', validationResult.message);
-          authCompletedRef.current = true;
-          setError(validationResult.message);
-          setIsLoading(false);
-
-          if (window.parent !== window) {
-            window.parent.postMessage({
-              type: 'AUTH_ERROR',
-              message: validationResult.message,
-              source: 'IECB'
-            }, '*');
-          }
-          break;
-      }
-    };
-
-    window.addEventListener('message', handleMessage);
-
-    // Timeout de 10s para não ficar carregando eternamente
-    const timeoutId = setTimeout(() => {
-      if (!authCompletedRef.current) {
-        console.log('[Auth] Timeout aguardando postMessage');
-        setError('Timeout aguardando autenticação do sistema principal');
-        setIsLoading(false);
-      }
-    }, 10000);
-
-    return () => {
-      window.removeEventListener('message', handleMessage);
-      clearTimeout(timeoutId);
-    };
+    setIsLoading(false);
   }, []);
 
   return (
