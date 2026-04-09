@@ -61,7 +61,7 @@ export const AccessDenied: React.FC<AccessDeniedProps> = ({ message }) => {
       >
         <Block sx={{ fontSize: 64, color: 'error.main', mb: 2 }} />
         <Typography variant="h5" gutterBottom fontWeight={600}>
-          Acesso Negado
+          Acesso Negado .
         </Typography>
         <Typography variant="body1" color="text.secondary">
           {message || 'Você não tem permissão para acessar este sistema.'}
