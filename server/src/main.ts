@@ -175,5 +175,5 @@ app.use('/', routes(
 // Inicialização do servidor
 
 server.listen(process.env.PORT, () => {
-  console.log(`Servidor rodando em: ${process.env.DB_HOST} porta:${process.env.PORT}`);
+  console.log(`Servidor rodando em ==> ${process.env.DB_HOST} porta:${process.env.PORT}`);
 });
