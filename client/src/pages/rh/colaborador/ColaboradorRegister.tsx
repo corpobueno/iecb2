@@ -66,7 +66,7 @@ const ColaboradorRegister: React.FC = () => {
   const navigate = useNavigate();
   const { showSnackbarMessage } = useSnackbar();
   const { save, ...methods } = useVForm<IColaboradorForm>({
-    resolver: yupResolver(formValidationSchema),
+    resolver: yupResolver(formValidationSchema) as any,
   });
   const [isLoading, setIsLoading] = useState(false);
   const [project, setProject] = useState<IColaboradorForm>(initialValues);
