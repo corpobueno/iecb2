@@ -1,9 +1,10 @@
 module.exports = {
   apps: [{
     name: 'iecbc',
-    script: 'serve',
-    args: '-s build -l 3000',
-    cwd: './client',
+    script: 'npx',
+    args: 'serve -s build -l 3000',
+    cwd: __dirname,
+    exec_mode: 'fork',
     instances: 1,
     autorestart: true,
     watch: false,
