@@ -1,8 +1,8 @@
 module.exports = {
   apps: [{
-    name: 'manda-gelo-client',
+    name: 'iecbc',
     script: 'serve',
-    args: '-s build -l 5183',
+    args: '-s build -l 3000',
     cwd: './client',
     instances: 1,
     autorestart: true,
