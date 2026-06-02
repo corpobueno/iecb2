@@ -1,4 +1,4 @@
-import { IPagamento, IPagamentoForm, IPagamentoProcessar, ICaixaPagamentoFiltros, ICaixaPagamentoResult, ICaixaFiltrosOptions, ICaixaDetalhesFiltros, IPagamentoDetalhe, IVendaProduto } from '../entities/IPagamento';
+import { IPagamento, IPagamentoForm, IPagamentoProcessar, ICaixaPagamentoFiltros, ICaixaPagamentoResult, ICaixaFiltrosOptions, ICaixaDetalhesFiltros, IPagamentoDetalhe, IVendaProduto, IRelatorioVendasFiltros, IRelatorioVendasResult } from '../entities/IPagamento';
 import PagamentoRepository from '../repositories/PagamentoRepository';
 import { AppError } from '../utils/AppError';
 import { sanitizeEmptyToNull } from '../utils/sanitizeData';
@@ -265,6 +265,13 @@ export class PagamentoUseCases {
       throw new AppError('Forma de pagamento é obrigatória', 400);
     }
     return this.repository.getCaixaDetalhes(filtros);
+  }
+
+  async getRelatorioVendas(filtros: IRelatorioVendasFiltros): Promise<IRelatorioVendasResult> {
+    if (!filtros.data_inicio || !filtros.data_fim) {
+      throw new AppError('Data inicial e final são obrigatórias', 400);
+    }
+    return this.repository.getRelatorioVendas(filtros);
   }
 
   /**

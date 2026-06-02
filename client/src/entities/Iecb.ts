@@ -394,6 +394,56 @@ export interface IPagamentoDetalhe {
 }
 
 // ========================================
+// CATEGORIA DE CURSOS
+// ========================================
+export interface ICategoriaCurso {
+  id: number;
+  nome: string;
+}
+
+// ========================================
+// RELATÓRIO DE VENDAS
+// ========================================
+export interface IRelatorioVendasFiltros {
+  data_inicio: string;
+  data_fim: string;
+  caixa?: string;
+  docente?: string;
+}
+
+export interface IRelatorioVendasCurso {
+  idCurso: number;
+  nomeCurso: string;
+  total: number;
+  qntPagamentos: number;
+  qntAlunos: number;
+}
+
+export interface IRelatorioVendasCategoria {
+  idCategoria: number;
+  nomeCategoria: string;
+  total: number;
+  qntPagamentos: number;
+  qntAlunos: number;
+  cursos: IRelatorioVendasCurso[];
+}
+
+export interface IRelatorioVendasProduto {
+  idProduto: number;
+  nomeProduto: string;
+  total: number;
+  qntVendas: number;
+}
+
+export interface IRelatorioVendasResult {
+  totalGeral: number;
+  totalCursos: number;
+  totalProdutos: number;
+  categorias: IRelatorioVendasCategoria[];
+  produtos: IRelatorioVendasProduto[];
+}
+
+// ========================================
 // PRODUTOS
 // ========================================
 export interface IProduto {

@@ -1,6 +1,8 @@
-import { Grid } from '@mui/material';
-import { VTextField, VFormContainer } from '../../components/forms';
-import { ICursoForm } from '../../entities/Iecb';
+import { useEffect, useState } from 'react';
+import { Grid, MenuItem } from '@mui/material';
+import { VTextField, VFormContainer, VSelect } from '../../components/forms';
+import { ICursoForm, ICategoriaCurso } from '../../entities/Iecb';
+import { CategoriaCursoService } from '../../api/services/CategoriaCursoService';
 
 interface Props {
   handleSave: (data: ICursoForm) => void;
@@ -10,6 +12,14 @@ interface Props {
 }
 
 export const CursoForm = ({ handleSave, isLoading = false, project, methods }: Props) => {
+  const [categorias, setCategorias] = useState<ICategoriaCurso[]>([]);
+
+  useEffect(() => {
+    CategoriaCursoService.find().then((resp) => {
+      if (!(resp instanceof Error)) setCategorias(resp);
+    });
+  }, []);
+
   return (
     <VFormContainer sx={{ maxHeight: 'calc(100vh - 90px)', overflow: 'auto' }} methods={methods} handleSave={handleSave}>
       <Grid container item direction="row" spacing={2}>
@@ -23,13 +33,20 @@ export const CursoForm = ({ handleSave, isLoading = false, project, methods }: P
           />
         </Grid>
         <Grid item xs={12} sm={4} md={3}>
-          <VTextField
-            disabled={isLoading}
+          <VSelect
+            disabled={isLoading || categorias.length === 0}
             fullWidth
             label="Categoria"
             name="categoria"
-            defaultValue={project.categoria}
-          />
+            defaultValue={project.categoria ?? ''}
+          >
+            <MenuItem value="">Sem categoria</MenuItem>
+            {categorias.map((cat) => (
+              <MenuItem key={cat.id} value={String(cat.id)}>
+                {cat.nome}
+              </MenuItem>
+            ))}
+          </VSelect>
         </Grid>
         <Grid item xs={6} sm={4} md={3}>
           <VTextField

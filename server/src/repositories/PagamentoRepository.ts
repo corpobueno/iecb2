@@ -1,4 +1,4 @@
-import { IPagamento, IPagamentoForm, ICaixaPagamentoFiltros, ICaixaPagamentoResult, ICaixaFiltrosOptions, ICaixaDetalhesFiltros, IPagamentoDetalhe } from '../entities/IPagamento';
+import { IPagamento, IPagamentoForm, ICaixaPagamentoFiltros, ICaixaPagamentoResult, ICaixaFiltrosOptions, ICaixaDetalhesFiltros, IPagamentoDetalhe, IRelatorioVendasFiltros, IRelatorioVendasResult } from '../entities/IPagamento';
 
 export default interface PagamentoRepository {
   findByCliente(idCliente: number, ref?: 'id_cliente' | 'id_aluno'): Promise<IPagamento[]>;
@@ -13,4 +13,5 @@ export default interface PagamentoRepository {
   getCaixaPagamentos(filtros: ICaixaPagamentoFiltros): Promise<ICaixaPagamentoResult>;
   getCaixaFiltrosOptions(filtros: ICaixaPagamentoFiltros): Promise<ICaixaFiltrosOptions>;
   getCaixaDetalhes(filtros: ICaixaDetalhesFiltros): Promise<IPagamentoDetalhe[]>;
+  getRelatorioVendas(filtros: IRelatorioVendasFiltros): Promise<IRelatorioVendasResult>;
 }

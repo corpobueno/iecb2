@@ -143,6 +143,21 @@ export class PagamentoController {
     }
   }
 
+  async getRelatorioVendas(req: Request, res: Response) {
+    try {
+      const filtros = {
+        data_inicio: String(req.query.data_inicio),
+        data_fim: String(req.query.data_fim),
+        caixa: req.query.caixa ? String(req.query.caixa) : undefined,
+        docente: req.query.docente ? String(req.query.docente) : undefined,
+      };
+      const result = await this.useCases.getRelatorioVendas(filtros);
+      return res.status(StatusCodes.OK).json(result);
+    } catch (error) {
+      handleError(error, res);
+    }
+  }
+
   async estornar(req: Request, res: Response) {
     try {
       const id = Number(req.params.id);

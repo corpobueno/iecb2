@@ -34,6 +34,7 @@ const AlunoRegister = lazy(() => import('../pages/aluno/AlunoRegister'));
 const PagamentoList = lazy(() => import('../pages/pagamento/PagamentoList'));
 const PagamentoRegister = lazy(() => import('../pages/pagamento/PagamentoRegister'));
 const PagamentoCaixa = lazy(() => import('../pages/pagamento/caixa/PagamentoCaixa'));
+const RelatorioVendas = lazy(() => import('../pages/pagamento/relatorio/RelatorioVendas'));
 const ProductList = lazy(() => import('../pages/pagamento/product/ProductList'));
 const ProductRegister = lazy(() => import('../pages/pagamento/product/ProductRegister'));
 
@@ -91,6 +92,7 @@ export const AppRoutes = () => {
         {/* Pagamentos */}
         <Route path="/pagamentos" element={<PagamentoList />} />
         <Route path="/pagamentos/caixa" element={<PagamentoCaixa />} />
+        <Route path="/pagamentos/relatorio" element={<RelatorioVendas />} />
         <Route path="/pagamentos/cadastrar" element={<PagamentoRegister />} />
         <Route path="/pagamentos/editar/:id" element={<PagamentoRegister />} />
 

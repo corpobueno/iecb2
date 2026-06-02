@@ -1,5 +1,5 @@
 import { Api } from '../axios-config';
-import { IPagamento, IPagamentoForm, IPagamentoPage, IPagamentoProcessar, ICaixaPagamentoFiltros, ICaixaPagamentoResult, ICaixaFiltrosOptions, ICaixaDetalhesFiltros, IPagamentoDetalhe } from '../../entities/Iecb';
+import { IPagamento, IPagamentoForm, IPagamentoPage, IPagamentoProcessar, ICaixaPagamentoFiltros, ICaixaPagamentoResult, ICaixaFiltrosOptions, ICaixaDetalhesFiltros, IPagamentoDetalhe, IRelatorioVendasFiltros, IRelatorioVendasResult } from '../../entities/Iecb';
 
 export const PagamentoService = {
   findByCliente: async (idCliente: number, ativo = 1): Promise<IPagamentoPage | Error> => {
@@ -187,6 +187,26 @@ export const PagamentoService = {
         return error;
       }
       return new Error('Erro ao buscar detalhes dos pagamentos.');
+    }
+  },
+
+  getRelatorioVendas: async (filtros: IRelatorioVendasFiltros): Promise<IRelatorioVendasResult | Error> => {
+    try {
+      const params = new URLSearchParams({
+        data_inicio: filtros.data_inicio,
+        data_fim: filtros.data_fim,
+      });
+      if (filtros.caixa) params.append('caixa', filtros.caixa);
+      if (filtros.docente) params.append('docente', filtros.docente);
+
+      const { data } = await Api.get(`/pagamento/relatorio/vendas?${params.toString()}`);
+
+      if (data) return data;
+      return new Error('Erro ao buscar relatório de vendas.');
+    } catch (error) {
+      console.error(error);
+      if (error instanceof Error) return error;
+      return new Error('Erro ao buscar relatório de vendas.');
     }
   },
 

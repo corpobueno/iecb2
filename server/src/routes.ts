@@ -13,6 +13,7 @@ import { LeadsController } from './controllers/LeadsController';
 import { LeadsFranqueadoraController } from './controllers/LeadsFranqueadoraController';
 import { DiarioController } from './controllers/DiarioController';
 import { ProdutoController } from './controllers/ProdutoController';
+import { CategoriaCursoController } from './controllers/CategoriaCursoController';
 
 // RH Controllers
 import { ColaboradorController } from './controllers/rh/ColaboradorController';
@@ -35,6 +36,7 @@ export default (
   leadsFranqueadoraController: LeadsFranqueadoraController,
   diarioController: DiarioController,
   produtoController: ProdutoController,
+  categoriaCursoController: CategoriaCursoController,
   // RH Controllers
   colaboradorController: ColaboradorController,
   checklistTemplateController: ChecklistTemplateController,
@@ -118,8 +120,15 @@ export default (
   router.delete('/aluno/:id', ensureAuthenticated, (req, res) => alunoController.delete(req, res));
 
   // =====================================================
+  // CATEGORIA DE CURSOS ROUTES
+  // =====================================================
+  router.get('/categoria-curso', ensureAuthenticated, (req, res) => categoriaCursoController.find(req, res));
+  router.get('/categoria-curso/:id', ensureAuthenticated, (req, res) => categoriaCursoController.getById(req, res));
+
+  // =====================================================
   // PAGAMENTOS ROUTES
   // =====================================================
+  router.get('/pagamento/relatorio/vendas', ensureAuthenticated, (req, res) => pagamentoController.getRelatorioVendas(req, res));
   router.get('/pagamento/caixa', ensureAuthenticated, (req, res) => pagamentoController.getCaixaPagamentos(req, res));
   router.get('/pagamento/caixa/filtros', ensureAuthenticated, (req, res) => pagamentoController.getCaixaFiltrosOptions(req, res));
   router.get('/pagamento/caixa/detalhes', ensureAuthenticated, (req, res) => pagamentoController.getCaixaDetalhes(req, res));

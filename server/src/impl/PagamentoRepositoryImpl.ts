@@ -1,5 +1,5 @@
 import db from '../db';
-import { IPagamento, IPagamentoForm, ICaixaPagamentoFiltros, ICaixaPagamentoResult, ICaixaFiltrosOptions, IFormaPagamentoAgrupado, ICaixaDetalhesFiltros, IPagamentoDetalhe } from '../entities/IPagamento';
+import { IPagamento, IPagamentoForm, ICaixaPagamentoFiltros, ICaixaPagamentoResult, ICaixaFiltrosOptions, IFormaPagamentoAgrupado, ICaixaDetalhesFiltros, IPagamentoDetalhe, IRelatorioVendasFiltros, IRelatorioVendasResult, IRelatorioVendasCategoria, IRelatorioVendasCurso, IRelatorioVendasProduto } from '../entities/IPagamento';
 import PagamentoRepository from '../repositories/PagamentoRepository';
 
 const FORMAS_PAGAMENTO: Record<number, string> = {
@@ -203,6 +203,121 @@ export class PagamentoRepositoryImpl implements PagamentoRepository {
     }));
 
     return { caixas, docentes };
+  }
+
+  async getRelatorioVendas(filtros: IRelatorioVendasFiltros): Promise<IRelatorioVendasResult> {
+    const { data_inicio, data_fim, caixa, docente } = filtros;
+    const dataFimFull = `${data_fim} 23:59:59`;
+
+    // ----- CURSOS: pagamento -> aula -> curso -> categoria
+    let cursosQuery = db(this.tableName)
+      .select(
+        'cursos_iecb.id as idCurso',
+        'cursos_iecb.nome as nomeCurso',
+        'categoria_cursos.id as idCategoria',
+        'categoria_cursos.nome as nomeCategoria',
+      )
+      .sum({ total: db.raw('?? + COALESCE(??, 0)', [`${this.tableName}.valor`, `${this.tableName}.valor_matricula`]) })
+      .count({ qntPagamentos: `${this.tableName}.id` })
+      .countDistinct({ qntAlunos: `${this.tableName}.id_aluno` })
+      .innerJoin('aulas_iecb', `${this.tableName}.id_aula`, 'aulas_iecb.id')
+      .innerJoin('cursos_iecb', 'aulas_iecb.id_curso', 'cursos_iecb.id')
+      .leftJoin('categoria_cursos', 'cursos_iecb.categoria', 'categoria_cursos.id')
+      .where(`${this.tableName}.ativo`, 1)
+      .whereNotIn(`${this.tableName}.id_pagamento`, [0, 6, 16])
+      .whereNotNull(`${this.tableName}.id_aula`)
+      .whereBetween(`${this.tableName}.data`, [data_inicio, dataFimFull])
+      .groupBy('categoria_cursos.id', 'categoria_cursos.nome', 'cursos_iecb.id', 'cursos_iecb.nome')
+      .orderBy([
+        { column: 'categoria_cursos.nome', order: 'asc' },
+        { column: 'cursos_iecb.nome', order: 'asc' },
+      ]);
+
+    if (caixa) cursosQuery = cursosQuery.where(`${this.tableName}.caixa`, caixa);
+    if (docente) cursosQuery = cursosQuery.where(`${this.tableName}.docente`, docente);
+
+    // ----- PRODUTOS: pagamento -> lancamentos -> pacotes_servico
+    let produtosQuery = db(this.tableName)
+      .select(
+        'pacotes_servico.id as idProduto',
+        'pacotes_servico.nome as nomeProduto',
+      )
+      .sum({ total: `${this.tableName}.valor` })
+      .count({ qntVendas: `${this.tableName}.id` })
+      .innerJoin('lancamentos_iecb', `${this.tableName}.id_lancamentos`, 'lancamentos_iecb.id')
+      .leftJoin('pacotes_servico', 'lancamentos_iecb.produto', 'pacotes_servico.id')
+      .where(`${this.tableName}.ativo`, 1)
+      .whereNotIn(`${this.tableName}.id_pagamento`, [0, 6, 16])
+      .whereNull(`${this.tableName}.id_aula`)
+      .whereBetween(`${this.tableName}.data`, [data_inicio, dataFimFull])
+      .groupBy('pacotes_servico.id', 'pacotes_servico.nome')
+      .orderBy('pacotes_servico.nome', 'asc');
+
+    if (caixa) produtosQuery = produtosQuery.where(`${this.tableName}.caixa`, caixa);
+    if (docente) produtosQuery = produtosQuery.where(`${this.tableName}.docente`, docente);
+
+    const [cursosRows, produtosRows] = await Promise.all([cursosQuery, produtosQuery]);
+
+    // Agrupa cursos por categoria em memória
+    const categoriaMap = new Map<number, IRelatorioVendasCategoria>();
+
+    for (const row of cursosRows as any[]) {
+      const idCategoria = Number(row.idCategoria) || 0;
+      const nomeCategoria = row.nomeCategoria || 'Sem categoria';
+      const total = Number(row.total) || 0;
+      const qntPagamentos = Number(row.qntPagamentos) || 0;
+      const qntAlunos = Number(row.qntAlunos) || 0;
+
+      const curso: IRelatorioVendasCurso = {
+        idCurso: Number(row.idCurso),
+        nomeCurso: row.nomeCurso,
+        total,
+        qntPagamentos,
+        qntAlunos,
+      };
+
+      let categoria = categoriaMap.get(idCategoria);
+      if (!categoria) {
+        categoria = {
+          idCategoria,
+          nomeCategoria,
+          total: 0,
+          qntPagamentos: 0,
+          qntAlunos: 0,
+          cursos: [],
+        };
+        categoriaMap.set(idCategoria, categoria);
+      }
+
+      categoria.cursos.push(curso);
+      categoria.total += total;
+      categoria.qntPagamentos += qntPagamentos;
+      categoria.qntAlunos += qntAlunos;
+    }
+
+    const categorias = Array.from(categoriaMap.values()).sort((a, b) => {
+      if (a.idCategoria === 0) return 1;
+      if (b.idCategoria === 0) return -1;
+      return a.nomeCategoria.localeCompare(b.nomeCategoria);
+    });
+
+    const produtos: IRelatorioVendasProduto[] = produtosRows.map((row: any) => ({
+      idProduto: Number(row.idProduto) || 0,
+      nomeProduto: row.nomeProduto || 'Produto avulso',
+      total: Number(row.total) || 0,
+      qntVendas: Number(row.qntVendas) || 0,
+    }));
+
+    const totalCursos = categorias.reduce((sum, c) => sum + c.total, 0);
+    const totalProdutos = produtos.reduce((sum, p) => sum + p.total, 0);
+
+    return {
+      totalGeral: totalCursos + totalProdutos,
+      totalCursos,
+      totalProdutos,
+      categorias,
+      produtos,
+    };
   }
 
   async getCaixaDetalhes(filtros: ICaixaDetalhesFiltros): Promise<IPagamentoDetalhe[]> {

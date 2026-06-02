@@ -37,6 +37,7 @@ import { LeadsRepositoryImpl } from './impl/LeadsRepositoryImpl';
 import { LeadsFranqueadoraRepositoryImpl } from './impl/LeadsFranqueadoraRepositoryImpl';
 import { DiarioRepositoryImpl } from './impl/DiarioRepositoryImpl';
 import { ProdutoRepositoryImpl } from './impl/ProdutoRepositoryImpl';
+import { CategoriaCursoRepositoryImpl } from './impl/CategoriaCursoRepositoryImpl';
 
 // RH Repositories
 import { ColaboradorRepositoryImpl, ChecklistTemplateRepositoryImpl, ChecklistAdmissaoRepositoryImpl } from './impl/rh';
@@ -55,6 +56,7 @@ const leadsRepository = new LeadsRepositoryImpl();
 const leadsFranqueadoraRepository = new LeadsFranqueadoraRepositoryImpl();
 const diarioRepository = new DiarioRepositoryImpl();
 const produtoRepository = new ProdutoRepositoryImpl();
+const categoriaCursoRepository = new CategoriaCursoRepositoryImpl();
 
 // RH Repositories
 const colaboradorRepository = new ColaboradorRepositoryImpl();
@@ -79,6 +81,7 @@ import { LeadsUseCases } from './usecases/LeadsUseCases';
 import { LeadsFranqueadoraUseCases } from './usecases/LeadsFranqueadoraUseCases';
 import { DiarioUseCases } from './usecases/DiarioUseCases';
 import { ProdutoUseCases } from './usecases/ProdutoUseCases';
+import { CategoriaCursoUseCases } from './usecases/CategoriaCursoUseCases';
 
 // RH UseCases
 import { ColaboradorUseCases, ChecklistTemplateUseCases, ChecklistAdmissaoUseCases } from './usecases/rh';
@@ -98,6 +101,7 @@ const leadsUseCases = new LeadsUseCases(leadsRepository);
 const leadsFranqueadoraUseCases = new LeadsFranqueadoraUseCases(leadsFranqueadoraRepository);
 const diarioUseCases = new DiarioUseCases(diarioRepository);
 const produtoUseCases = new ProdutoUseCases(produtoRepository);
+const categoriaCursoUseCases = new CategoriaCursoUseCases(categoriaCursoRepository);
 
 // RH UseCases
 const colaboradorUseCases = new ColaboradorUseCases(colaboradorRepository, checklistTemplateRepository, checklistAdmissaoRepository);
@@ -122,6 +126,7 @@ import { LeadsController } from './controllers/LeadsController';
 import { LeadsFranqueadoraController } from './controllers/LeadsFranqueadoraController';
 import { DiarioController } from './controllers/DiarioController';
 import { ProdutoController } from './controllers/ProdutoController';
+import { CategoriaCursoController } from './controllers/CategoriaCursoController';
 
 // RH Controllers
 import { ColaboradorController, ChecklistTemplateController, ChecklistAdmissaoController } from './controllers/rh';
@@ -141,6 +146,7 @@ const leadsController = new LeadsController(leadsUseCases);
 const leadsFranqueadoraController = new LeadsFranqueadoraController(leadsFranqueadoraUseCases);
 const diarioController = new DiarioController(diarioUseCases);
 const produtoController = new ProdutoController(produtoUseCases);
+const categoriaCursoController = new CategoriaCursoController(categoriaCursoUseCases);
 
 // RH Controllers
 const colaboradorController = new ColaboradorController(colaboradorUseCases);
@@ -164,6 +170,7 @@ app.use('/', routes(
   leadsFranqueadoraController,
   diarioController,
   produtoController,
+  categoriaCursoController,
   // RH Controllers
   colaboradorController,
   checklistTemplateController,
