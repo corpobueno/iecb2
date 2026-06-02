@@ -102,6 +102,6 @@ export default defineConfig({
       'Content-Security-Policy': "frame-ancestors *"
     },
     port: 3000,
-    allowedHosts: ['app.institutocorpobueno.com.br', 'localhost'],
+    allowedHosts: true,
   }
 });
