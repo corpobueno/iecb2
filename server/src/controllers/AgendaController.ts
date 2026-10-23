@@ -2,6 +2,7 @@ import { Request, Response } from 'express';
 import { AgendaUseCases } from '../usecases/AgendaUseCases';
 import { StatusCodes } from 'http-status-codes';
 import { handleError } from '../utils/handleError';
+import db from '../db';
 
 export class AgendaController {
   constructor(private useCases: AgendaUseCases) {}
@@ -74,6 +75,21 @@ export class AgendaController {
       const idAula = Number(req.params.idAula);
       const count = await this.useCases.countByAula(idAula);
       return res.status(StatusCodes.OK).json({ count });
+    } catch (error) {
+      handleError(error, res);
+    }
+  }
+
+  async getUsuarios(req: Request, res: Response) {
+    try {
+      const companyId = req.user?.companyId;
+      const usuarios = await db('sec_users as u')
+        .select('u.login', 'u.usrname')
+        .innerJoin('sec_users_companies as sc', 'sc.login', 'u.login')
+        .where('sc.company_id', companyId)
+        .andWhere('u.usractive', 'Y')
+        .orderBy('u.usrname', 'asc');
+      return res.status(StatusCodes.OK).json(usuarios);
     } catch (error) {
       handleError(error, res);
     }

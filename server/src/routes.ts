@@ -97,6 +97,7 @@ export default (
   // =====================================================
   // AGENDA ROUTES
   // =====================================================
+  router.get('/agenda/usuarios', ensureAuthenticated, (req, res) => agendaController.getUsuarios(req, res));
   router.get('/agenda/periodo', ensureAuthenticated, (req, res) => agendaController.findByPeriodo(req, res));
   router.get('/agenda/data/:data', ensureAuthenticated, (req, res) => agendaController.findByData(req, res));
   router.get('/agenda/aula/:idAula/count', ensureAuthenticated, (req, res) => agendaController.countByAula(req, res));

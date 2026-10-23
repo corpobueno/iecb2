@@ -47,6 +47,7 @@ import { DocenteService } from '../../../api/services/DocenteService';
 import { WCash } from '../../../components/contents/WCash';
 import { useSnackbar } from '../../../contexts/SnackBarProvider';
 import { useAuth } from '../../../contexts/AuthContext';
+import { Api } from '../../../api/axios-config';
 import { toCash, toTel } from '../../../utils/functions';
 import { PaymentDialog } from './PaymentDialog';
 import { SaveToolbar } from '../../../components/contents/SaveToolBar';
@@ -83,6 +84,7 @@ export const AgendaDetails = ({ open, onClose, agenda, onRefresh }: AgendaDetail
   const [showEditDialog, setShowEditDialog] = useState(false);
   const [cursos, setCursos] = useState<ICurso[]>([]);
   const [docentes, setDocentes] = useState<IDocente[]>([]);
+  const [usuarios, setUsuarios] = useState<{ login: string; usrname: string }[]>([]);
   const [editForm, setEditForm] = useState({
     data: '',
     hora: '',
@@ -90,6 +92,7 @@ export const AgendaDetails = ({ open, onClose, agenda, onRefresh }: AgendaDetail
     idCurso: 0,
     docente: '',
     valor: 0,
+    usuario: '',
   });
   const [isSavingEdit, setIsSavingEdit] = useState(false);
 
@@ -268,11 +271,12 @@ export const AgendaDetails = ({ open, onClose, agenda, onRefresh }: AgendaDetail
   const handleOpenEdit = async () => {
     if (!agenda) return;
 
-    // Carregar cursos e docentes
-    const [cursosResult, docentesResult, aulaResult] = await Promise.all([
+    // Carregar cursos, docentes e usuários
+    const [cursosResult, docentesResult, aulaResult, usuariosResult] = await Promise.all([
       CursoService.find(),
       DocenteService.find(),
-      AulaService.getById(agenda.idAula),
+      AulaService.getById(agenda.idAula).catch(() => ({ idCurso: 0, docente: '', valor: 0 })),
+      Api.get('/agenda/usuarios').then(r => r.data).catch(() => []),
     ]);
 
     if (!(cursosResult instanceof Error)) {
@@ -281,6 +285,7 @@ export const AgendaDetails = ({ open, onClose, agenda, onRefresh }: AgendaDetail
     if (!(docentesResult instanceof Error)) {
       setDocentes(docentesResult.data);
     }
+    setUsuarios(Array.isArray(usuariosResult) ? usuariosResult : []);
 
     // Preencher form com dados atuais
     setEditForm({
@@ -290,6 +295,7 @@ export const AgendaDetails = ({ open, onClose, agenda, onRefresh }: AgendaDetail
       idCurso: aulaResult.idCurso || 0,
       docente: aulaResult.docente || '',
       valor: aulaResult.valor || 0,
+      usuario: agenda.usuario || user?.login || '',
     });
 
     setShowEditDialog(true);
@@ -300,11 +306,12 @@ export const AgendaDetails = ({ open, onClose, agenda, onRefresh }: AgendaDetail
 
     setIsSavingEdit(true);
     try {
-      // Atualizar agenda (data, hora, horaFim)
+      // Atualizar agenda (data, hora, horaFim, usuario)
       await AgendaService.update(agenda.id, {
         data: editForm.data,
         hora: editForm.hora,
         horaFim: editForm.horaFim,
+        usuario: editForm.usuario || undefined,
       });
 
       // Atualizar aula (curso, docente, valor)
@@ -737,6 +744,20 @@ export const AgendaDetails = ({ open, onClose, agenda, onRefresh }: AgendaDetail
               >
                 {docentes.map((docente) => (
                   <MenuItem key={docente.login} value={docente.login}>{docente.nome}</MenuItem>
+                ))}
+              </Select>
+            </FormControl>
+
+            <FormControl fullWidth size="small">
+              <InputLabel>Usuário</InputLabel>
+              <Select
+                value={editForm.usuario}
+                label="Usuário"
+                onChange={(e) => setEditForm({ ...editForm, usuario: e.target.value as string })}
+              >
+                <MenuItem value="">Nenhum</MenuItem>
+                {usuarios.map((u) => (
+                  <MenuItem key={u.login} value={u.login}>{u.usrname}</MenuItem>
                 ))}
               </Select>
             </FormControl>
